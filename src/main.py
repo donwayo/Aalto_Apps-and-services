@@ -117,6 +117,6 @@ class P2PClient(asyncore.dispatcher):
         log("Connected to {0}.".format(self.getpeername()))
 
 # P2P Server
-main = MainServerSocket(Q_PORT)
 p2p = P2PMain()
+main = MainServerSocket(Q_PORT)
 asyncore.loop(1)

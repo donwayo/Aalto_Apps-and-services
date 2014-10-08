@@ -9,3 +9,5 @@ Commands:
  - j[b|IP Address] : Join node, b is for bootstrap.
  - q : Quit
  - s : Search
+ - i[arg] : Display current status.
+ - b[num] : Send Bye message to num client.

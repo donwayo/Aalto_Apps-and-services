@@ -2,7 +2,6 @@ from settings import *
 import struct
 import socket
 import hashlib
-import time
 
 class P2PMessage():
     Version = 0x01
@@ -38,7 +37,10 @@ class P2PMessage():
 
     def GetHeaderBytes(self):
         MessageIdString = str(self.SenderPort) + str(self.SenderPort) +  str(time.time());
-        self.MessageId = struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time())).digest()[:4])[0]
+        
+        if self.MessageId == 0:
+            self.MessageId = struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time())).digest()[:4])[0]
+        
         return self.MessageHeader.pack( \
             self.Version, \
             self.TTL, \
@@ -110,11 +112,11 @@ class PingMessage(P2PMessage):
 class JoinMessage(P2PMessage):
     Payload = b'\x02\x00'
     Request = 1
-    def __init__(self, ipaddr, req=1):
+    def __init__(self, ipaddr, msg_id=-1):
         self.TTL = 1
         self.Type = P2PMessage.MSG_JOIN
         self.SenderIP = ipaddr
-        self.Request = (req == 1)
+        self.Request = (msg_id == -1)
 
     def FromData(self, data, payload=b''):
         if len(data) == 8:

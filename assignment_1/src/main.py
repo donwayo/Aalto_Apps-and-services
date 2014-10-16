@@ -17,8 +17,9 @@ class CmdlineClient(asyncore.file_dispatcher):
             
             # Search command is 's' followed by the search string.
             if receivedData[0] == 's':
-                log('Search {0}'.format(receivedData[1:]), 2)
-                self.send('Searching {0}\n'.format(receivedData[1:]))
+                query = receivedData[1:]
+                log('Searching for "{0}"'.format(query), 1)
+                p2p.search(query)
 
             # Join network is 'j' followed by 'b' for the bootstrap node or an IP address.
             elif receivedData[0] == 'j' and len(receivedData) > 1:
@@ -36,7 +37,7 @@ class CmdlineClient(asyncore.file_dispatcher):
                 cId = int(receivedData[1:])
                 log('Got request to send Bye message to connection {0}'.format(cId), 1)
                 p2p.sendBye(cId)
-                
+
             # Display information
             elif receivedData[0] == 'i':
                 if len(receivedData[1:]) > 0:

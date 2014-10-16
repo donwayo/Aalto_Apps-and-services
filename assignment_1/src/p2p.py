@@ -10,6 +10,7 @@ class P2PMain():
     HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]
     ConnectionCount = 0
     P2Pserver = None
+    QueryMessages = {}
 
     def __init__(self, host, port):
         self.P2Pserver = P2PListener(host, port, self)
@@ -29,6 +30,23 @@ class P2PMain():
             self.Peers[idx].bye()
             return True
         return False
+
+    # Perform a query to a specific node
+    def sendQuery(self, idx, query, mid):
+        if idx in self.Peers:
+            self.Peers[idx].query(query, mid)
+            return True
+        return False
+
+    # Search
+    def search(self, query):
+        mid = 0
+        for idx in self.Peers:
+            log('Querying peer {0}'.format(idx), 2)
+            mid = self.Peers[idx].query(query, mid)
+
+        # TODO change this 0 to IP.
+        self.QueryMessages[mid] = [0, time.time()]
 
     # Remove peer from connection list.
     def leave(self, peer):
@@ -61,9 +79,12 @@ class P2PMain():
     # Return a string representation of the current state.
     def __str__(self):
         str_con = ""
+        str_q = ""
+        for q in self.QueryMessages:
+            str_q = str_q + "\t{0} ({1})\n".format(q[0],q[1]) 
         for i in self.Peers.keys():
             str_con = str_con + "{0}\t{1}\n".format(i,self.Peers[i].thisAsAString())
-        return "Peer connections: {0}\n{1}\n".format(len(self.Peers), str_con)
+        return "Query messages:\n{2}\nPeer connections: {0}\n{1}\n".format(len(self.Peers), str_con, str_q)
 
 # P2P Connections
 class P2PConnection(asyncore.dispatcher):
@@ -91,7 +112,15 @@ class P2PConnection(asyncore.dispatcher):
         self.out_buffer = msg.GetBytes()
         log("Sending Bye message to {0}".format(self.getpeername()[0]),1)
         log("{0}".format(msg),2)
-        
+
+    def query(self, query, mid=0):
+        msg = QueryMessage(self.getIP())
+        msg.MessageId = mid
+        self.out_buffer = msg.GetBytes()
+        log("Sending Query message to {0}".format(self.getpeername()[0]),1)
+        log("{0}".format(msg),2)
+        return msg.MessageId
+
     def handle_write(self):
         sent = self.send(self.out_buffer)
         self.out_buffer = self.out_buffer[sent:]
@@ -160,6 +189,7 @@ class P2PConnection(asyncore.dispatcher):
   
     def __str__(self):
         return self.thisAsAString()
+
 
 class P2PListener(asyncore.dispatcher):
     P2Pmain = None

@@ -24,6 +24,7 @@ class P2PMessage():
     def LoadHeader(self, data):
         self.Version = data[0]
         self.TTL = data[1]
+        self.Type = data[2]
         self.SenderPort = data[4]
         self.PayloadLength = data[5]
         self.SenderIP = data[6]
@@ -35,11 +36,14 @@ class P2PMessage():
     def __str__(self):
         return "Message type {3}:\n\tTTL:{0}\n\tSenderPort:{1}\n\tSenderIP:{2}\n\tMessageId:{4}\n\tPayloadLength:{5}\n".format(self.TTL, self.SenderPort, self.GetSenderIP(), self.Type, self.MessageId, self.PayloadLength)
 
+    def GetNewId(self):
+        return struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time())).digest()[:4])[0]
+    
     def GetHeaderBytes(self):
         MessageIdString = str(self.SenderPort) + str(self.SenderPort) +  str(time.time());
         
         if self.MessageId == 0:
-            self.MessageId = struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time())).digest()[:4])[0]
+            self.MessageId = self.GetNewId()
         
         return self.MessageHeader.pack( \
             self.Version, \
@@ -70,8 +74,9 @@ def ParseData(data):
             #    print('unimplemented\n')
             #elif header[2] == P2PMessage.MSG_QHIT:
             #    print('unimplemented\n')
-            #elif header[2] == P2PMessage.MSG_QUERY:
-            #    print('unimplemented\n')
+            elif header[2] == P2PMessage.MSG_QUERY:
+                msg = QueryMessage()
+                msg.FromData(header, payload)
             #elif header[2] == P2PMessage.MSG_PONG:
             #    print('unimplemented\n')
             elif header[2] == P2PMessage.MSG_BYE:
@@ -98,7 +103,7 @@ class PingMessage(P2PMessage):
 
         if(ttl > 1):
             # Do type B
-            log('Ping response shoud send neighbors.')
+            log('Ping response shoud send neighbors.',1)
         else:
             self.PayloadLength = 0
 
@@ -106,7 +111,7 @@ class PingMessage(P2PMessage):
         if self.PayloadLength == 0:
             return self.GetHeaderBytes()
         else:
-            log('Not implemented!')
+            log('Not implemented!',1)
             return b'\x00'
 
 class JoinMessage(P2PMessage):
@@ -131,3 +136,19 @@ class JoinMessage(P2PMessage):
             return self.GetHeaderBytes()
         else:
             return self.GetHeaderBytes() + self.Payload
+
+class QueryMessage(P2PMessage):
+    Payload = b''
+    def __init__(self, ipaddr):
+        self.TTL = DEFAULT_TTL
+        self.Type = P2PMessage.MSG_QUERY
+        self.SenderIP = ipaddr
+
+    def SetQuery(self, payload):
+        self.Payload = payload.partition('\x00')[0] + '\x00'
+        self.PayloadLength = len(self.Payload)
+
+    def FromData(self, data, payload):
+        if len(data) > 8:
+            self.LoadHeader(data)
+            self.SetQuery(payload)

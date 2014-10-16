@@ -11,6 +11,7 @@ class P2PMessage():
     SenderIP = 0
     MessageId = 0
     SenderPort = PORT
+    Payload = ''
 
     MSG_PING = 0x00
     MSG_PONG = 0x01
@@ -56,7 +57,7 @@ class P2PMessage():
             self.MessageId )
 
     def GetBytes(self):
-        return self.GetHeaderBytes()
+        return self.GetHeaderBytes() + self.Payload
 
 def ParseData(data):
     msg = False
@@ -75,7 +76,7 @@ def ParseData(data):
             #elif header[2] == P2PMessage.MSG_QHIT:
             #    print('unimplemented\n')
             elif header[2] == P2PMessage.MSG_QUERY:
-                msg = QueryMessage()
+                msg = QueryMessage(0)
                 msg.FromData(header, payload)
             #elif header[2] == P2PMessage.MSG_PONG:
             #    print('unimplemented\n')
@@ -130,12 +131,6 @@ class JoinMessage(P2PMessage):
             if payload == self.Payload:
                 self.Request = False
                 self.PayloadLength = 2
-
-    def GetBytes(self):
-        if self.Request:
-            return self.GetHeaderBytes()
-        else:
-            return self.GetHeaderBytes() + self.Payload
 
 class QueryMessage(P2PMessage):
     Payload = b''

@@ -144,6 +144,6 @@ class QueryMessage(P2PMessage):
         self.PayloadLength = len(self.Payload)
 
     def FromData(self, data, payload):
-        if len(data) > 8:
+        if len(data) >= 8:
             self.LoadHeader(data)
             self.SetQuery(payload)

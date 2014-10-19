@@ -113,7 +113,29 @@ class PingMessage(P2PMessage):
     def isTypeA(self):
         return self.TTL == 1
 
+class PongMessage(P2PMessage):
+    
+    Entries = []
+    PongEntry = struct.Struct('!IHH')
 
+    def __init__(self, ipaddr):
+        self.TTL = 1
+        self.Type = P2PMessage.MSG_PONG
+        self.SenderIP = ipaddr
+
+    def addEntry(self, ip, port):
+        Entries.append([ip, port])
+
+    def GetBytes(self):
+        # Build entry payload. 
+        
+        self.Payload = struct.pack('!HH', len(self.Entries), 0)
+        for e in self.Entries:
+            self.Payload += PongEntry.pack(e[0], e[1], 0)
+
+        self.PayloadLength = len(self.Payload)
+
+        return P2PMessage.GetBytes(self)
 
 class JoinMessage(P2PMessage):
     Payload = b'\x02\x00'

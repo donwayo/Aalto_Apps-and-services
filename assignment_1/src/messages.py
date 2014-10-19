@@ -102,22 +102,18 @@ class ByeMessage(P2PMessage):
 
 class PingMessage(P2PMessage):
     def __init__(self, ipaddr, ttl = 1):
-        
         self.TTL = ttl
         self.Type = P2PMessage.MSG_PING
         self.SenderIP = ipaddr
-
-        if(ttl > 1):
-            log('Ping response shoud send neighbors.', 2)
-        
         self.PayloadLength = 0
 
     def GetBytes(self):
-        if self.PayloadLength == 0:
-            return self.GetHeaderBytes()
-        else:
-            log('Not implemented!', 1)
-            return b'\x00'
+        return self.GetHeaderBytes()
+
+    def isTypeA(self):
+        return self.TTL == 1
+
+
 
 class JoinMessage(P2PMessage):
     Payload = b'\x02\x00'

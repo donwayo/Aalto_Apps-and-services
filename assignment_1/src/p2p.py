@@ -25,8 +25,10 @@ class P2PMain():
             self.broadcastPing()
 
     def broadcastPing(self):
-        for peer in self.Peers:
-            self.Peers[peer].ping()
+        if len(self.Peers) > 0:
+            log("Sending a broadcast ping.", 1)
+            for peer in self.Peers:
+                self.Peers[peer].ping()
 
     # Join a node in the network.
     def join(self, addr, port=PORT):
@@ -39,6 +41,7 @@ class P2PMain():
 
     # Send a bye message to a selected peer.
     def sendBye(self, idx):
+        log("Sending a broadcast bye.", 1)
         if idx in self.Peers:
             self.Peers[idx].bye()
             return True
@@ -58,6 +61,8 @@ class P2PMain():
             log('Querying peer {0}'.format(idx), 2)
             mid = self.Peers[idx].query(query, mid)
 
+        log("Searching for {0} with Message Id: {1}".format(query, mid), 1)
+
         # TODO change this 0 to IP.
         self.QueryMessages[mid] = [0, time.time()]
 
@@ -74,6 +79,7 @@ class P2PMain():
         if idx >= 0 and (idx in self.Peers):
             self.Peers[idx].close()
             del self.Peers[idx]
+            log("Peer {0} left. ".format(idx), 1)
 
     # Handle an in coming connection.
     def acceptConnection(self,sock):
@@ -81,12 +87,14 @@ class P2PMain():
         peer.P2Pmain = self
         self.Peers[self.ConnectionCount] = peer
         self.ConnectionCount = self.ConnectionCount + 1
+        log("New peer connection from {0}:{1}".format(sock.getpeername()[0], sock.getpeername()[1]),1)
 
     # Close all connections and exit.
     def shutDown(self):
+        log("Broadcasting Bye message.", 1)
         for i in self.Peers:
             self.Peers[i].bye()
-            #self.Peers[i].close()
+            self.Peers[i].close()
         self.P2Pserver.close()
 
     # Return a string representation of the current state.
@@ -119,25 +127,27 @@ class P2PConnection(asyncore.dispatcher):
         self.out_buffer = message.GetBytes()
 
         self.JoinMessageId = message.MessageId
-        log("Attempting to join with Message:\n {0}".format(message),2)
+        log("Attempting to join with Message:\n {0}".format(message), 2)
 
         self.PeerName = "{0}:{1}".format(addr,port)
 
     def bye(self):
-        msg = ByeMessage(self.getIP())
-        self.out_buffer = msg.GetBytes()
-        log("Sending Bye message to {0}".format(self.getpeername()[0]),1)
-        log("{0}".format(msg), 3)
+        if self.Joined:
+            msg = ByeMessage(self.getIP())
+            self.out_buffer = msg.GetBytes()
+            log("Sending Bye message to {0}".format(self.getpeername()[0]), 2)
+            log("{0}".format(msg), 3)
 
     def query(self, query, mid=0):
-        msg = QueryMessage(self.getIP())
-        msg.SetQuery(query)
-        msg.MessageId = mid
-        self.out_buffer = msg.GetBytes()
-        log("Sending Query message to {0}".format(self.getpeername()[0]),1)
-        log("{0}".format(msg),2)
-        log("{0}".format(self.out_buffer),3)
-        return msg.MessageId
+        if self.Joined:
+            msg = QueryMessage(self.getIP())
+            msg.SetQuery(query)
+            msg.MessageId = mid
+            self.out_buffer = msg.GetBytes()
+            log("Sending Query message to {0}".format(self.getpeername()[0]), 2)
+            log("{0}".format(msg),2)
+            log("{0}".format(self.out_buffer),3)
+            return msg.MessageId
 
     def handle_write(self):
         sent = self.send(self.out_buffer)
@@ -157,7 +167,6 @@ class P2PConnection(asyncore.dispatcher):
         return (len(self.out_buffer) > 0)
 
     def ping(self):
-        # Code to send Ping message goes here.
         if self.Joined:
             log("Send ping request (A).", 2)
             msg = PingMessage(self.getIP())
@@ -171,30 +180,31 @@ class P2PConnection(asyncore.dispatcher):
             self.handle_message(msg)
             log('{0}'.format(msg), 3)
         elif len(receivedData) > 0:
-            log('Got trash', 1)
+            log('Got trash', 2)
 
     def handle_message(self, msg):
+        # Join messages
         if msg.Type == P2PMessage.MSG_JOIN:
             if msg.MessageId == self.JoinMessageId and \
             not msg.Request:
                 self.Joined = True
-                log("Joined successfully @ {0}".format(msg.GetSenderIP()), 1)
+                log("Joined successfully @ {0}".format(msg.GetSenderIP()), 2)
                 self.JoinTime = time.time()
             elif msg.Request:
                 rmsg = JoinMessage(self.P2Pmain.HostIP, msg.MessageId)
                 self.out_buffer = rmsg.GetBytes()
                 self.Joined = True
                 self.JoinTime = time.time()
-                log("Responded to join request @ {0}".format(msg.GetSenderIP()), 1)
+                log("Responded to join request @ {0}".format(msg.GetSenderIP()), 2)
             else:
                 log("Message Ids don't match. {0} : {1} ".format(msg.MessageId, self.JoinMessageId), 2)
-
+        # Bye messages
         elif msg.Type == P2PMessage.MSG_BYE:
-            log("Got Bye message. Closing connection with {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1]),1)
+            log("Got Bye message. Closing connection with {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1]), 2)
             self.P2Pmain.leave(self)
-
+        # Ping messages
         elif msg.Type == P2PMessage.MSG_PING:
-            log("Got Ping message from {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1]), 1)
+            log("Got Ping message from {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1]), 2)
         elif msg.Type == P2PMessage.MSG_QUERY:
             # Check if we have already recieved a query with the same id.
                 # Resend the query to all other peers.
@@ -203,24 +213,25 @@ class P2PConnection(asyncore.dispatcher):
                 # Ignore the query 
             log("Query Message\n{0}".format(msg), 2)
         else:
-            log("Unhandled message from {0}:{1}".format(self.getpeername()[0], self.getpeername()[1]),1)
+            log("Unhandled message from {0}:{1}".format(self.getpeername()[0], self.getpeername()[1]), 2)
 
+    # Need to define how to handle errors here and fail safely.
     #def handle_error(self):
     #    log("Can't connect to {0}.".format(self.PeerName), 1)
     #    self.P2Pmain.leave(self)
 
     def handle_close(self):
-        log("Disconnected from {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1]),1)
+        log("Disconnected from {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1]), 2)
         self.P2Pmain.leave(self)
 
     def handle_connect(self):
-        log("Connected to {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1] ),1)
+        log("Connected to {0}:{1}.".format(self.getpeername()[0], self.getpeername()[1] ), 2)
 
     def thisAsAString(self):
         if self.Joined:
-            return "Peer connection to {0}:{1}\n\tAlive for {2}".format(self.getpeername()[0], self.getpeername()[1], time.time()-self.JoinTime,1)
+            return "Peer connection to {0}:{1}\n\tAlive for {2}".format(self.getpeername()[0], self.getpeername()[1], time.time()-self.JoinTime)
         else:
-            return "Attempting connection to {0}\n\tWaiting.".format(self.PeerName, 1)
+            return "Attempting connection to {0}\n\tWaiting.".format(self.PeerName)
 
     def __str__(self):
         return self.thisAsAString()
@@ -239,7 +250,7 @@ class P2PListener(asyncore.dispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-            log('Incoming connection from {0}:{1}'.format(addr[0], addr[1]),1)
+            log('Incoming connection from {0}:{1}'.format(addr[0], addr[1]), 1)
             self.P2Pmain.acceptConnection(sock)
 
     def writable(self):

@@ -45,6 +45,12 @@ class CmdlineClient(asyncore.file_dispatcher):
                 else:
                     self.send("{0}\n".format(p2p))
 
+            # Send ping
+            elif receivedData[0] == 'p' and len(receivedData) > 1:
+                cId = int(receivedData[1:])
+                log('Got request to send Ping message (B) to connection {0}'.format(cId), 1)
+                p2p.sendPing(cId)
+
             # Close down.
             elif receivedData[0] == 'q':
                 log("Closing down.",1)

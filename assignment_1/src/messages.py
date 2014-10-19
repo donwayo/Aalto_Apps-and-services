@@ -1,6 +1,7 @@
 from settings import *
 import struct
 import socket
+import binascii
 import hashlib
 
 class P2PMessage():
@@ -57,7 +58,10 @@ class P2PMessage():
             self.MessageId )
 
     def GetBytes(self):
-        return self.GetHeaderBytes() + self.Payload
+        if self.PayloadLength == 0:
+            return self.GetHeaderBytes()
+        else:
+            return self.GetHeaderBytes() + self.Payload
 
 def ParseData(data):
     msg = False
@@ -71,8 +75,9 @@ def ParseData(data):
             if header[2] == P2PMessage.MSG_JOIN:
                 msg = JoinMessage(0)
                 msg.FromData(header, payload)
-            #elif header[2] == P2PMessage.MSG_PING:
-            #    print('unimplemented\n')
+            elif header[2] == P2PMessage.MSG_PING:
+                msg = PingMessage(0)
+                msg.LoadHeader(header)
             #elif header[2] == P2PMessage.MSG_QHIT:
             #    print('unimplemented\n')
             elif header[2] == P2PMessage.MSG_QUERY:
@@ -103,34 +108,41 @@ class PingMessage(P2PMessage):
         self.SenderIP = ipaddr
 
         if(ttl > 1):
-            # Do type B
-            log('Ping response shoud send neighbors.',1)
-        else:
-            self.PayloadLength = 0
+            log('Ping response shoud send neighbors.', 2)
+        
+        self.PayloadLength = 0
 
     def GetBytes(self):
         if self.PayloadLength == 0:
             return self.GetHeaderBytes()
         else:
-            log('Not implemented!',1)
+            log('Not implemented!', 1)
             return b'\x00'
 
 class JoinMessage(P2PMessage):
     Payload = b'\x02\x00'
-    Request = 1
-    def __init__(self, ipaddr, msg_id=-1):
+    Request = True
+    def __init__(self, ipaddr, msg_id = -1):
         self.TTL = 1
         self.Type = P2PMessage.MSG_JOIN
         self.SenderIP = ipaddr
-        self.Request = (msg_id == -1)
+
+        if msg_id == -1:
+            self.Request = True
+            self.PayloadLength = 0
+        else:
+            self.Request = False
+            self.PayloadLength = 2
 
     def FromData(self, data, payload=b''):
         if len(data) == 8:
             self.LoadHeader(data)
-
             if payload == self.Payload:
-                self.Request = False
                 self.PayloadLength = 2
+                self.Request = False
+            else:
+                self.Request = True
+                self.PayloadLength = 0
 
 class QueryMessage(P2PMessage):
     Payload = b''

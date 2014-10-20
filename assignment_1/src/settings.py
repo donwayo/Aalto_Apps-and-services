@@ -1,8 +1,6 @@
-import time
-
 PORT = 10001
 BOOTSTRAP = '130.233.43.41'
-LOG_LVL = 2
+LOG_LVL = 1
 DEFAULT_TTL = 5
 
 LOCAL_ENTRIES = {
@@ -12,7 +10,3 @@ LOCAL_ENTRIES = {
 	4: "The walking dead"
 }
 
-def log(s,l):
-    if l <= LOG_LVL:
-    	# \x1b
-        print("[{0}] {1}".format(time.ctime(),s))

@@ -2,6 +2,7 @@ import asyncore
 import socket
 import sys
 from settings import *
+from utils import *
 from p2p import *
 
 
@@ -44,6 +45,9 @@ class CmdlineClient(asyncore.file_dispatcher):
                     self.send("O: {0}\n".format(eval(receivedData[1:])))
                 else:
                     self.send("{0}\n".format(p2p))
+            # Change loglvl
+            elif receivedData[0] == 'l' and len(receivedData) > 1:
+                LOG_LVL = int(receivedData[1:])
 
             # Send ping
             elif receivedData[0] == 'p' and len(receivedData) > 1:
@@ -62,4 +66,4 @@ class CmdlineClient(asyncore.file_dispatcher):
 # P2P Server
 p2p = P2PMain('localhost', PORT)
 cmdline = CmdlineClient(sys.stdin)
-asyncore.loop(1)
+asyncore.loop(60)

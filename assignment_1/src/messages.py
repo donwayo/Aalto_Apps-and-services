@@ -1,4 +1,5 @@
 from settings import *
+from utils import *
 import struct
 import socket
 import binascii
@@ -149,10 +150,10 @@ class PongMessage(P2PMessage):
         self.TTL = 1
         self.Type = P2PMessage.MSG_PONG
         self.SenderIP = ipaddr
-        self.Entries = []
+        self.Entries = None
 
     def AddEntry(self, ip, port):
-        Entries.append([ip, port])
+        self.Entries.append([ip, port])
 
     def GetEntries(self):
         return self.Entries
@@ -161,10 +162,12 @@ class PongMessage(P2PMessage):
         self.Entries = entries
 
     def ParseEntries(self, data, e_size):
+        self.Entries = []
         if e_size == (len(data) / self.PongEntry.size):
-            for e in xrange(e_size):
+            # Read up to 5 entries.
+            for e in xrange(min(e_size, 5)):
                 offset = e * self.PongEntry.size
-                entry = self.PongEntry.unpack(payload[offset:offset+self.PongEntry.size])
+                entry = self.PongEntry.unpack(data[offset:offset+self.PongEntry.size])
                 self.AddEntry(entry[0], entry[1])
         else:
             log("PongMessage reported payload size doesn't match: {0}:{1}".format(e_size, len(payload[2:])/8), 2)
@@ -176,19 +179,22 @@ class PongMessage(P2PMessage):
 
             if self.PayloadLength == len(payload) \
             and self.PayloadLength >= 4 \
-            and (self.PayloadLength - 2) % 8 == 0:
+            and (self.PayloadLength - 4) % 8 == 0:
                 e_size = struct.unpack('!HH', payload[:4])[0]
                 self.ParseEntries(payload[4:], e_size)
    
     def GetBytes(self):
-        # Build entry payload. 
-        self.Payload = struct.pack('!HH', len(self.Entries), 0)
-        for e in self.Entries:
-            self.Payload += PongEntry.pack(e[0], e[1], 0)
+        # Build entry payload.
+        self.Payload = b""
 
-        self.PayloadLength = len(self.Payload)
+        if not self.Entries == None: 
+            self.Payload = struct.pack('!HH', len(self.Entries), 0)
+            for e in self.Entries:
+                self.Payload += self.PongEntry.pack(e[0], e[1], 0)
 
-        return P2PMessage.GetBytes(self)
+            self.PayloadLength = len(self.Payload)
+
+        return self.GetHeaderBytes() + self.Payload
 
 class JoinMessage(P2PMessage):
     def __init__(self, ipaddr, msg_id = -1):

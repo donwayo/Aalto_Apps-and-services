@@ -124,12 +124,14 @@ class P2PMain():
         # TODO do local search
         mid = 0
         for idx in self.Peers:
-            log('Querying peer {0}'.format(idx), 2)
-            mid = self.Peers[idx].query(query, mid)
+            if self.Peers[idx].Joined:
+                log('Querying peer {0}'.format(idx), 2)
+                mid = self.Peers[idx].query(query, mid)
 
         # TODO change this 0 to IP.
-        self.storeQueryInfo(mid, 0)
-        log("Searching for {0} with Message Id: {1}".format(query, mid), 1)
+        if mid != 0:
+            self.storeQueryInfo(mid, 0)
+            log("Searching for {0} with Message Id: {1}".format(query, mid), 1)
 
     # Perform a search on the local data and return matches
     def getMatches(self, query):
@@ -239,7 +241,8 @@ class P2PConnection(asyncore.dispatcher):
             self.sendMessage(msg)
             log("Sending Query message to {0}".format(self.getPeerName()), 2)
             log("{0}".format(msg), 3)
-            return msg.GetMessageId() 
+            return msg.GetMessageId()
+        return 0 
 
     def handle_write(self):
         sent = self.send(self.out_buffer)

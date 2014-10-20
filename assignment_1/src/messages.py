@@ -191,12 +191,11 @@ class JoinMessage(P2PMessage):
     def FromData(self, data, payload=b''):
         if len(data) == 8:
             self.LoadHeader(data)
-            if payload == self.Payload:
-                self.PayloadLength = 2
+            self.Payload = payload
+            if self.PayloadLength == 2:
                 self.Request = False
             else:
                 self.Request = True
-                self.PayloadLength = 0
 
 class QueryMessage(P2PMessage):
     def __init__(self, ipaddr):

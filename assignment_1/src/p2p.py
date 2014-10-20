@@ -24,11 +24,32 @@ class P2PMain():
             self.LastPingTime = time.time()
             self.broadcastPing()
 
+    # Broadcast a ping message to all peers
     def broadcastPing(self):
         if len(self.Peers) > 0:
-            log("Sending a broadcast Ping.", 2)
+            log("Sending a broadcast ping.", 1)
             for peer in self.Peers:
                 self.Peers[peer].ping()
+
+    # Forwarding a query message to all peers
+    def forwardQueryMessage(self, msg):
+        if msg.TTL <= 1:
+            return
+        log("Sending a broadcast query.", 1)
+        msg.TTL = msg.TTL - 1
+        for i in self.Peers:
+            self.Peers[i].sendMessage(msg)
+
+    # Forwarding a qhit message to the given peer
+    def forwardQueryHitMessage(self, msg, peername):
+        if msg.TTL <= 1:
+            return
+        log("Forwarding a query hit message.", 1)
+        msg.TTL = msg.TTL - 1
+        for i in self.Peers:
+            if self.Peers[i].PeerName == peername:
+                self.Peers[i].sendMessage(msg)
+                return
 
     # Join a node in the network.
     def join(self, addr, port=PORT):
@@ -47,24 +68,45 @@ class P2PMain():
             return True
         return False
 
-    # Perform a query to a specific node
-    def sendQuery(self, idx, query, mid):
-        if idx in self.Peers:
-            self.Peers[idx].query(query, mid)
-            return True
-        return False
+    # # Perform a query to a specific node
+    # def sendQuery(self, idx, query, mid):
+    #     if idx in self.Peers:
+    #         self.Peers[idx].query(query, mid)
+    #         return True
+    #     return False
 
     # Search
     def search(self, query):
+        # TODO do local search
         mid = 0
         for idx in self.Peers:
             log('Querying peer {0}'.format(idx), 2)
             mid = self.Peers[idx].query(query, mid)
 
+        # TODO change this 0 to IP.
+        self.storeQueryInfo(mid, 0)
         log("Searching for {0} with Message Id: {1}".format(query, mid), 1)
 
-        # TODO change this 0 to IP.
-        self.QueryMessages[mid] = [0, time.time()]
+    # Perform a search on the local data and return matches
+    def getMatches(self, query):
+        matches = {}
+        for eid, val in LOCAL_ENTRIES.items():
+            if query in val:
+                matches[eid] = val
+        return matches
+
+    # Get info of the given query message id
+    def getQueryInfo(self, mid):
+        if mid in self.QueryMessages:
+            return self.QueryMessages[mid]
+        return None
+
+    # Store the given query message to our message list
+    def storeQueryInfo(self, mid, senderIp):
+        self.QueryMessages[mid] = { \
+            'from': senderIp, \
+            'time': time.time() \
+        }
 
     # Remove peer from connection list.
     def leave(self, peer):
@@ -123,15 +165,17 @@ class P2PConnection(asyncore.dispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect( (addr, port) )
         message = JoinMessage(self.P2Pmain.HostIP)
-        self.out_buffer = message.GetBytes()
+        self.sendMessage(message)
 
-        self.JoinMessageId = message.MessageId
+        self.JoinMessageId = message.GetMessageId()
         log("Attempting to join with Message:\n {0}".format(message), 3)
+
+        self.PeerName = "{0}:{1}".format(addr,port)
 
     def bye(self):
         if self.Joined:
             msg = ByeMessage(self.getIP())
-            self.out_buffer = msg.GetBytes()
+            self.sendMessage(msg)
             log("Sending Bye message to {0}".format(self.getpeername()[0]), 2)
             log("{0}".format(msg), 3)
 
@@ -140,10 +184,12 @@ class P2PConnection(asyncore.dispatcher):
             msg = QueryMessage(self.getIP())
             msg.SetQuery(query)
             msg.MessageId = mid
-            self.out_buffer = msg.GetBytes()
+            self.sendMessage(msg)
+
             log("Sending Query message to {0}".format(self.getpeername()[0]), 2)
-            log("{0}".format(msg),3)
-            return msg.MessageId
+
+            log("{0}".format(msg), 3)
+            return msg.GetMessageId()
 
     def handle_write(self):
         sent = self.send(self.out_buffer)
@@ -169,8 +215,12 @@ class P2PConnection(asyncore.dispatcher):
         if self.Joined:
             log("Send Ping request (A).", 2)
             msg = PingMessage(self.getIP())
-            self.out_buffer = msg.GetBytes()
+            self.sendMessage(msg)
             self.LastPing = time.time();
+
+    def sendMessage(self, msg):
+        log("Sending message: {0}".format(msg), 2)
+        self.out_buffer = msg.GetBytes()
 
     def handle_read(self):
         receivedData = self.recv(8192)
@@ -191,7 +241,7 @@ class P2PConnection(asyncore.dispatcher):
                 self.JoinTime = time.time()
             elif msg.Request:
                 rmsg = JoinMessage(self.P2Pmain.HostIP, msg.MessageId)
-                self.out_buffer = rmsg.GetBytes()
+                self.sendMessage(rmsg)
                 self.Joined = True
                 self.JoinTime = time.time() 
                 log("Responded to join request @ {0}".format(self.getPeerName()), 2)
@@ -214,12 +264,45 @@ class P2PConnection(asyncore.dispatcher):
             else:
                 log("Got Pong message (A) from {0}.".format(self.getPeerName()), 2)
         elif msg.Type == P2PMessage.MSG_QUERY:
+            log("Query Message\n{0}".format(msg), 2)
+
             # Check if we have already recieved a query with the same id.
+            mid = msg.MessageId
+            queryInfo = self.P2Pmain.getQueryInfo(mid)
+            if queryInfo == None and msg.PayloadLength > 0:
+                senderIP = msg.SenderIP
+                query = msg.Payload
+                # store in the list of query messages
+                self.P2Pmain.storeQueryInfo(mid, self.PeerName)
                 # Resend the query to all other peers.
+                self.P2Pmain.forwardQueryMessage(msg)
                 # Check local files and answer the query.
-                # 
+                matches = self.P2Pmain.getMatches(query)
+                if len(matches) > 0:
+                    qhitMsg = QueryHitMessage(self.getIP(), mid)
+                    qhitMsg.SetEntries(matches)
+                    self.sendMessage(qhitMsg)
+            else:
                 # Ignore the query 
-            log("Query Message\n{0}".format(msg), 3)
+                log("Message ID existed -> drop the message")
+        elif msg.Type == P2PMessage.MSG_QHIT:
+            log("QueryHit Message\n{0}".format(msg), 2)
+
+            mid = msg.MessageId
+            queryInfo = self.P2Pmain.getQueryInfo(mid)
+            if queryInfo != None:
+                # display the result if the query is from this node
+                if queryInfo['from'] == 0:
+                    entries = msg.GetEntries()
+                    log("Result from: {0}\n".format(msg.SenderIP), 2)
+                    for eid, val in entries.items():
+                        log("ID: {0} - Value: {1}".format(eid, val), 2)
+                # otherwise, forward it back based on our history 
+                else:
+                    self.P2Pmain.forwardQueryHitMessage(msg, queryInfo['from'])
+
+            else:
+                log("Not found matched query message -> drop the message")
         else:
             log("Unhandled message from {0} type {1}.".format(self.getPeerName(), msg.Type), 2)
 

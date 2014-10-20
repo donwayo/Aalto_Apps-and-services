@@ -187,8 +187,8 @@ class P2PMain():
     def __str__(self):
         str_con = ""
         str_q = ""
-        for q in self.QueryMessages:
-            str_q = str_q + "\t{0} ({1})\n".format(elf.QueryMessages[q][0],elf.QueryMessages[q][1]) 
+        for q in self.QueryMessages.keys():
+            str_q = str_q + "\t{0} ({1})\n".format(self.QueryMessages[q][0],self.QueryMessages[q][1]) 
         for i in self.Peers.keys():
             str_con = str_con + "{0}\t{1}\n".format(i,self.Peers[i].thisAsAString())
         return "Query messages:\n{2}\nPeer connections: {0}\n{1}\n".format(len(self.Peers), str_con, str_q)
@@ -240,6 +240,8 @@ class P2PConnection(asyncore.dispatcher):
             log("Sending Query message to {0}".format(self.getPeerName()), 2)
             log("{0}".format(msg), 3)
             return msg.GetMessageId() 
+        else:
+            return 0
 
     def handle_write(self):
         sent = self.send(self.out_buffer)

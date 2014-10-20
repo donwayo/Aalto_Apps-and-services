@@ -7,15 +7,15 @@ from settings import *
 
 # Main class. 
 class P2PMain():
-    Peers = {}
-    HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]
-    ConnectionCount = 0
-    P2Pserver = None
-    QueryMessages = {}
-    LastPingTime = 0
 
     def __init__(self, host, port):
         self.P2Pserver = P2PListener(host, port, self)
+        self.Peers = {}
+        self.ConnectionCount = 0
+        self.P2Pserver = None
+        self.QueryMessages = {}
+        self.LastPingTime = 0
+        self.HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]
 
     # Periodic stuff goes here:
     def tick(self):
@@ -152,13 +152,14 @@ class P2PMain():
 # P2P Connections
 class P2PConnection(asyncore.dispatcher):
 
-    out_buffer = b''
-
-    Joined = False
-    JoinMessageId = 0
-    JoinTime = 0
-    LastPing = 0
-    P2Pmain = None
+    def __init__(self, sock=None, tmap=None):
+        asyncore.dispatcher.__init__(self,sock,tmap)
+        self.Joined = False
+        self.JoinMessageId = 0
+        self.JoinTime = 0
+        self.LastPing = 0
+        self.P2Pmain = None
+        self.out_buffer = b''
 
     def join(self, addr, port):
         asyncore.dispatcher.__init__(self)

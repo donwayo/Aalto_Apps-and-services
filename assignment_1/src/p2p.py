@@ -282,7 +282,7 @@ class P2PConnection(asyncore.dispatcher):
                     self.sendMessage(qhitMsg)
             else:
                 # Ignore the query 
-                log("Message ID existed -> drop the message")
+                log("Message ID existed -> drop the message", 2)
         elif msg.Type == P2PMessage.MSG_QHIT:
             log("QueryHit Message\n{0}".format(msg), 3)
 
@@ -300,7 +300,7 @@ class P2PConnection(asyncore.dispatcher):
                     self.P2Pmain.forwardQueryHitMessage(msg, queryInfo['from'])
 
             else:
-                log("Not found matched query message -> drop the message")
+                log("Not found matched query message -> drop the message", 2)
         else:
             log("Unhandled message from {0} type {1}.".format(self.getPeerName(), msg.Type), 2)
 

@@ -190,7 +190,7 @@ class P2PMain():
         str_con = ""
         str_q = ""
         for q in self.QueryMessages.keys():
-            str_q = str_q + "\t{0} ({1})\n".format(self.QueryMessages[q][0],self.QueryMessages[q][1]) 
+            str_q = str_q + "\t{2}\t{0}\t({1}s)\n".format(self.QueryMessages[q]['from'],time.time()-self.QueryMessages[q]['time'], q) 
         for i in self.Peers.keys():
             str_con = str_con + "{0}\t{1}\n".format(i,self.Peers[i].thisAsAString())
         return "Query messages:\n{2}\nPeer connections: {0}\n{1}\n".format(len(self.Peers), str_con, str_q)

@@ -188,7 +188,7 @@ class P2PConnection(asyncore.dispatcher):
             self.sendMessage(msg)
             log("Sending Query message to {0}".format(self.getPeerName()), 2)
             log("{0}".format(msg), 3)
-            return msg.GetMessageId()
+            return msg.GetMessageId() 
 
     def handle_write(self):
         sent = self.send(self.out_buffer)

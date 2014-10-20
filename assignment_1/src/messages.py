@@ -66,7 +66,7 @@ class P2PMessage():
         return struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time())).digest()[:4])[0]
     
     def GetHeaderBytes(self):
-        MessageIdString = str(self.SenderPort) + str(self.SenderPort) +  str(time.time());
+        MessageIdString = str(self.SenderPort) + str(self.SenderPort) +  str(time.time())
         
         return self.MessageHeader.pack( \
             self.Version, \

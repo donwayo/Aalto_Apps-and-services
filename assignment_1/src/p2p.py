@@ -62,7 +62,7 @@ class P2PMain():
 
             # Check connection to bootstrap and reconnect if necesary
             if not self.isConnected(BOOTSTRAP, PORT):
-                self.join(BOOTSTRAP)
+                self.join(BOOTSTRAP, PORT)
             # Check command line and reconnect
             # if not cmdline.connected:
             #    cmdline = CmdlineClient(sys.stdin)
@@ -95,7 +95,7 @@ class P2PMain():
                 return
 
     # Join a node in the network.
-    def join(self, addr, port=PORT):
+    def join(self, addr, port):
         # TODO: Should check that the parameters are sane here.
         log("Attempting to connect to peer {0}:{1}".format(addr,port),2)
         peer = P2PConnection()
@@ -188,7 +188,7 @@ class P2PMain():
         str_con = ""
         str_q = ""
         for q in self.QueryMessages:
-            str_q = str_q + "\t{0} ({1})\n".format(q[0],q[1]) 
+            str_q = str_q + "\t{0} ({1})\n".format(elf.QueryMessages[q][0],elf.QueryMessages[q][1]) 
         for i in self.Peers.keys():
             str_con = str_con + "{0}\t{1}\n".format(i,self.Peers[i].thisAsAString())
         return "Query messages:\n{2}\nPeer connections: {0}\n{1}\n".format(len(self.Peers), str_con, str_q)
@@ -266,7 +266,10 @@ class P2PConnection(asyncore.dispatcher):
 
     def getPeerName(self):
         if self.connected:
-            return "{0}:{1}".format(self.getpeername()[0], self.getpeername()[1])
+            try:
+                return "{0}:{1}".format(self.getpeername()[0], self.getpeername()[1])
+            except:
+                return self.PeerName
         else:
             return self.PeerName
 
@@ -316,7 +319,7 @@ class P2PConnection(asyncore.dispatcher):
             self.handle_message(msg)
             
         elif len(receivedData) > 0:
-            log('Got trash', 2)
+            log('Got trash from {0}'.format(self.getPeerName()), 2)
 
     def handle_message(self, msg):
         
@@ -370,7 +373,7 @@ class P2PConnection(asyncore.dispatcher):
                             if not self.P2Pmain.isConnected(ip, port):
                                 self.P2Pmain.join(ip,port)
                             else:
-                                log("Peer {0}:{1} is already connected.".format(e[0],e[1]),2)
+                                log("Peer {0}:{1} is already connected.".format(ip,port),2)
                 else:
                     log("Got Pong message (A) from {0}.".format(self.getPeerName()), 2)
             else:

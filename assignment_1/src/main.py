@@ -76,6 +76,10 @@ class CmdlineClient(asyncore.file_dispatcher):
 
 
 # P2P Server
-p2p = P2PMain('localhost', PORT)
+serverPort = PORT
+if len(sys.argv) > 1:
+    serverPort = int(sys.argv[1])
+    
+p2p = P2PMain('localhost', serverPort)
 cmdline = CmdlineClient(sys.stdin)
 asyncore.loop(10)

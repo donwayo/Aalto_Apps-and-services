@@ -134,9 +134,9 @@ class P2PMain():
     # Perform a search on the local data and return matches
     def getMatches(self, query):
         matches = {}
-        for eid, val in LOCAL_ENTRIES.items():
-            if query in val:
-                matches[eid] = val
+        for key, info in LOCAL_ENTRIES.items():
+            if query == key:
+                matches[info['id']] = info['value']
         return matches
 
     # Get info of the given query message id
@@ -409,7 +409,7 @@ class P2PConnection(asyncore.dispatcher):
                 # display the result if the query is from this node
                 if queryInfo['from'] == 0:
                     entries = msg.GetEntries()
-                    log("Result from: {0}\n".format(msg.SenderIP), 2)
+                    log("Result from: {0}".format(socket.inet_ntoa(struct.pack('!I',msg.SenderIP))), 2)
                     for eid, val in entries.items():
                         log("ID: {0} - Value: {1}".format(eid, val), 2)
                 # otherwise, forward it back based on our history 

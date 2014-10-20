@@ -4,6 +4,7 @@ import socket
 import binascii
 import hashlib
 
+#
 class P2PMessage():
     Version = 0x01
     TTL = 5
@@ -36,7 +37,24 @@ class P2PMessage():
         return socket.inet_ntoa(struct.pack('!I',self.SenderIP))
 
     def __str__(self):
-        return "Message type {3}:\n\tTTL:{0}\n\tSenderPort:{1}\n\tSenderIP:{2}\n\tMessageId:{4}\n\tPayloadLength:{5}\n".format(self.TTL, self.SenderPort, self.GetSenderIP(), self.Type, self.MessageId, self.PayloadLength)
+        strMsg = "Message type {3}:\n\t"
+        strMsg += "TTL:{0}\n\t"
+        strMsg += "SenderPort:{1}\n\t"
+        strMsg += "SenderIP:{2}\n\t"
+        strMsg += "MessageId:{4}\n\t"
+        strMsg += "PayloadLength:{5}\n\t"
+        strMsg += "Payload:{6}\n"
+
+        return strMsg.format(\
+            self.TTL, \
+            self.SenderPort, \
+            self.GetSenderIP(), \
+            self.Type, \
+            self.MessageId, \
+            self.PayloadLength,\
+            binascii.hexlify(self.Payload))
+
+
 
     def GetNewId(self):
         return struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time())).digest()[:4])[0]

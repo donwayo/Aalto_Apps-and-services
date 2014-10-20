@@ -2,14 +2,14 @@ import time
 
 PORT = 10001
 BOOTSTRAP = '130.233.43.41'
-LOG_LVL = 3
+LOG_LVL = 2
 DEFAULT_TTL = 5
 
 LOCAL_ENTRIES = {
-	1: "How I met your mother",
-	2: "Friends",
-	3: "Games of thrones",
-	4: "The walking dead"
+	"group10": {
+		"id": 1,
+		"value": "1b2c3d55"
+	}
 }
 
 def log(s,l):

@@ -12,7 +12,6 @@ class P2PMain():
         self.P2Pserver = P2PListener(host, port, self)
         self.Peers = {}
         self.ConnectionCount = 0
-        self.P2Pserver = None
         self.QueryMessages = {}
         self.LastPingTime = 0
         self.HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]

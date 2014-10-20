@@ -154,12 +154,32 @@ class PongMessage(P2PMessage):
     def AddEntry(self, ip, port):
         Entries.append([ip, port])
 
+    def GetEntries(self):
+        return self.Entries
+
+    def SetEntries(self, entries):
+        self.Entries = entries
+
+    def ParseEntries(self, data, e_size):
+        if e_size == (len(data) / self.PongEntry.size):
+            for e in xrange(e_size):
+                offset = e * self.PongEntry.size
+                entry = self.PongEntry.unpack(payload[offset:offset+self.PongEntry.size])
+                self.AddEntry(entry[0], entry[1])
+        else:
+            log("PongMessage reported payload size doesn't match: {0}:{1}".format(e_size, len(payload[2:])/8), 2)
+
+
     def FromData(self, header, payload):
         if len(header) == 8:
             self.LoadHeader(header)
 
-            # Handle payload.
-
+            if self.PayloadLength == len(payload) \
+            and self.PayloadLength >= 4 \
+            and (self.PayloadLength - 2) % 8 == 0:
+                e_size = struct.unpack('!HH', payload[:4])[0]
+                self.ParseEntries(payload[4:], e_size)
+   
     def GetBytes(self):
         # Build entry payload. 
         self.Payload = struct.pack('!HH', len(self.Entries), 0)
@@ -171,7 +191,6 @@ class PongMessage(P2PMessage):
         return P2PMessage.GetBytes(self)
 
 class JoinMessage(P2PMessage):
-    #Request = True
     def __init__(self, ipaddr, msg_id = -1):
         P2PMessage.__init__(self)
 

@@ -105,8 +105,9 @@ def ParseData(data):
             elif header[2] == P2PMessage.MSG_QUERY:
                 msg = QueryMessage(0)
                 msg.FromData(header, payload)
-            #elif header[2] == P2PMessage.MSG_PONG:
-            #    print('unimplemented\n')
+            elif header[2] == P2PMessage.MSG_PONG:
+                msg = PongMessage(0)
+                msg.FromData(header, payload)
             elif header[2] == P2PMessage.MSG_BYE:
                 msg = ByeMessage(0)
                 msg.LoadHeader(header)
@@ -149,8 +150,14 @@ class PongMessage(P2PMessage):
         self.Type = P2PMessage.MSG_PONG
         self.SenderIP = ipaddr
 
-    def addEntry(self, ip, port):
+    def AddEntry(self, ip, port):
         Entries.append([ip, port])
+
+    def FromData(self, header, payload):
+        if len(header) == 8:
+            self.LoadHeader(header)
+
+            # Handle payload.
 
     def GetBytes(self):
         # Build entry payload. 

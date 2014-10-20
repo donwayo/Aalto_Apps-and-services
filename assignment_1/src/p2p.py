@@ -176,7 +176,7 @@ class P2PConnection(asyncore.dispatcher):
         if self.Joined:
             msg = ByeMessage(self.getIP())
             self.sendMessage(msg)
-            log("Sending Bye message to {0}".format(self.getpeername()[0]), 2)
+            log("Sending Bye message to {0}".format(self.getPeerName()), 2)
             log("{0}".format(msg), 3)
 
     def query(self, query, mid=0):
@@ -185,9 +185,7 @@ class P2PConnection(asyncore.dispatcher):
             msg.SetQuery(query)
             msg.MessageId = mid
             self.sendMessage(msg)
-
-            log("Sending Query message to {0}".format(self.getpeername()[0]), 2)
-
+            log("Sending Query message to {0}".format(self.getPeerName()), 2)
             log("{0}".format(msg), 3)
             return msg.GetMessageId()
 
@@ -219,7 +217,7 @@ class P2PConnection(asyncore.dispatcher):
             self.LastPing = time.time();
 
     def sendMessage(self, msg):
-        log("Sending message: {0}".format(msg), 2)
+        log("Sending message: {0}".format(msg), 3)
         self.out_buffer = msg.GetBytes()
 
     def handle_read(self):
@@ -286,7 +284,7 @@ class P2PConnection(asyncore.dispatcher):
                 # Ignore the query 
                 log("Message ID existed -> drop the message")
         elif msg.Type == P2PMessage.MSG_QHIT:
-            log("QueryHit Message\n{0}".format(msg), 2)
+            log("QueryHit Message\n{0}".format(msg), 3)
 
             mid = msg.MessageId
             queryInfo = self.P2Pmain.getQueryInfo(mid)

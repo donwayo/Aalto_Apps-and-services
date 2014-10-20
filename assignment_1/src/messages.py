@@ -142,13 +142,14 @@ class PingMessage(P2PMessage):
 
 class PongMessage(P2PMessage):
     
-    Entries = []
     PongEntry = struct.Struct('!IHH')
 
     def __init__(self, ipaddr):
+        P2PMessage.__init__(self)
         self.TTL = 1
         self.Type = P2PMessage.MSG_PONG
         self.SenderIP = ipaddr
+        self.Entries = []
 
     def AddEntry(self, ip, port):
         Entries.append([ip, port])

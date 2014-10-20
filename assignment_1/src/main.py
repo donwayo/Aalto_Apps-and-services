@@ -30,7 +30,12 @@ class CmdlineClient(asyncore.file_dispatcher):
                     p2p.join(BOOTSTRAP, PORT)
                 else:
                     ipaddr = receivedData[1:]
-                    p2p.join(ipaddr, PORT)
+                    ipaddr = ipaddr.split(':')
+                    nport = PORT
+                    if len(ipaddr) == 2:
+                        nport = int(ipaddr[1])
+                    ipaddr = ipaddr[0]
+                    p2p.join(ipaddr, nport)
                     self.send('Joining {0}\n'.format(ipaddr))
             
             # Send Bye
@@ -45,9 +50,11 @@ class CmdlineClient(asyncore.file_dispatcher):
                     self.send("O: {0}\n".format(eval(receivedData[1:])))
                 else:
                     self.send("{0}\n".format(p2p))
-            # Change loglvl
+
+            # Change loglvl (doesn't work!)
             elif receivedData[0] == 'l' and len(receivedData) > 1:
                 LOG_LVL = int(receivedData[1:])
+                self.send("Changed loglvl to {0}\n".format(LOG_LVL))
 
             # Send ping
             elif receivedData[0] == 'p' and len(receivedData) > 1:

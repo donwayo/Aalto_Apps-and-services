@@ -79,6 +79,7 @@ class GuiPart(QtGui.QMainWindow):
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.bindUi(MainWindow)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "P2P", None))
@@ -89,6 +90,9 @@ class GuiPart(QtGui.QMainWindow):
         self.pb_bye.setText(_translate("MainWindow", "Send Bye", None))
         self.action.setText(_translate("MainWindow", "Menu", None))
 
+    def bindUi(self, MainWindow):
+    	self.pb_join.clicked.connect(self.join)
+
     def __init__(self, queue, endcommand, *args):
         QtGui.QMainWindow.__init__(self, *args)
         self.queue = queue
@@ -98,6 +102,7 @@ class GuiPart(QtGui.QMainWindow):
         self.endcommand = endcommand
         self.p2p = P2PMain('localhost', PORT)
 
+    def join(self):
 
 
     def closeEvent(self, ev):
@@ -169,21 +174,7 @@ class ThreadedClient:
 
 
     def workerThread1(self):
-        """
-        This is where we handle the asynchronous I/O. For example, it may be
-        a 'select()'.
-        One important thing to remember is that the thread has to yield
-        control.
-        """
         asyncore.loop(10)
-
-        #while self.running:
-            # To simulate asynchronous I/O, we create a random number at
-            # random intervals. Replace the following 2 lines with the real
-            # thing.
-        #    time.sleep(rand.random() * 0.3)
-        #    msg = rand.random()
-        #    self.queue.put(msg)
 
 rand = random.Random()
 root = QtGui.QApplication(sys.argv)

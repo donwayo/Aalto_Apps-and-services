@@ -6,6 +6,8 @@ import binascii
 import hashlib
 import logging
 
+logger = logging.getLogger('p2p')
+
 #
 class P2PMessage():
 
@@ -117,7 +119,7 @@ def ParseData(data):
                 msg = P2PMessage()
                 msg.LoadHeader(header)
         else:
-            logging.info("Trash: Header version: {0} TTL: {1} Payload: {2} - {3} Type: {4}".format(header[0], header[1], header[5], len(payload), header[2]))
+            logger.info("Trash: Header version: {0} TTL: {1} Payload: {2} - {3} Type: {4}".format(header[0], header[1], header[5], len(payload), header[2]))
     return msg
 
 class ByeMessage(P2PMessage):
@@ -172,7 +174,7 @@ class PongMessage(P2PMessage):
                 entry = self.PongEntry.unpack(data[offset:offset+self.PongEntry.size])
                 self.AddEntry(entry[0], entry[1])
         else:
-            logging.info("PongMessage reported payload size doesn't match: {0}:{1}".format(e_size, len(payload[2:])/8))
+            logger.info("PongMessage reported payload size doesn't match: {0}:{1}".format(e_size, len(payload[2:])/8))
 
 
     def FromData(self, header, payload):

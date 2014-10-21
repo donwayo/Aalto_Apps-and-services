@@ -6,7 +6,6 @@ from settings import *
 from utils import *
 from p2p import *
 
-
 # Command line control
 class CmdlineClient(asyncore.file_dispatcher):
     def __init__(self, file):
@@ -21,7 +20,7 @@ class CmdlineClient(asyncore.file_dispatcher):
             # Search command is 's' followed by the search string.
             if receivedData[0] == 's':
                 query = receivedData[1:]
-                logging.info('Searching for "{0}"'.format(query))
+                logger.info('Searching for "{0}"'.format(query))
                 p2p.search(query)
 
             # Join network is 'j' followed by 'b' for the bootstrap node or an IP address.
@@ -43,7 +42,7 @@ class CmdlineClient(asyncore.file_dispatcher):
             # Send Bye
             elif receivedData[0] == 'b' and len(receivedData) > 1:
                 cId = int(receivedData[1:])
-                logging.info('Got request to send Bye message to connection {0}'.format(cId))
+                logger.info('Got request to send Bye message to connection {0}'.format(cId))
                 p2p.sendBye(cId)
 
             # Display information
@@ -62,12 +61,12 @@ class CmdlineClient(asyncore.file_dispatcher):
             # Send ping
             elif receivedData[0] == 'p' and len(receivedData) > 1:
                 cId = int(receivedData[1:])
-                logging.info('Got request to send Ping message (B) to connection {0}'.format(cId))
+                logger.info('Got request to send Ping message (B) to connection {0}'.format(cId))
                 p2p.sendPing(cId)
 
             # Close down.
             elif receivedData[0] == 'q':
-                logging.info("Closing down.")
+                logger.info("Closing down.")
                 self.send('Bye\n')
                 p2p.shutDown()
                 self.close();
@@ -79,9 +78,18 @@ if len(sys.argv) > 1:
     serverPort = int(sys.argv[1])
 
 # init logging
-logging.basicConfig(format='- %(asctime)s %(message)s', \
-                        datefmt='%I:%M:%S %p', \
-                        level=logging.DEBUG)
+logLevel = logging.INFO
+logger = logging.getLogger('p2p')
+logger.setLevel(logLevel)
+
+# create console handler and set level to debug
+formatter = logging.Formatter("%(asctime)s: %(message)s", "- %I:%M:%S %p")
+ch = logging.StreamHandler()
+ch.setLevel(logLevel)
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
 
 p2p = P2PMain('localhost', serverPort)
 cmdline = CmdlineClient(sys.stdin)

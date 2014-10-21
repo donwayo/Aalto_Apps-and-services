@@ -46,7 +46,7 @@ class GuiPart(QtGui.QMainWindow):
         self.scrollAreaWidgetContents = QtGui.QWidget()
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 349, 339))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
-        self.sa_log.setWidget(self.scrollAreaWidgetContents)
+        #self.sa_log.setWidget(self.scrollAreaWidgetContents)
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName(_fromUtf8("tab_2"))
@@ -76,9 +76,20 @@ class GuiPart(QtGui.QMainWindow):
         self.action = QtGui.QAction(MainWindow)
         self.action.setObjectName(_fromUtf8("action"))
 
+        self._console = QtGui.QTextBrowser(self)
+        self._console.setGeometry(QtCore.QRect(0, 0, 349, 339))
+        self._console.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
+        self._console.ensureCursorVisible()
+
+        XStream.stdout().messageWritten.connect( self._console.insertPlainText )
+        XStream.stderr().messageWritten.connect( self._console.insertPlainText )
+        self.sa_log.setWidget(self._console)
+
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "P2P", None))
@@ -154,12 +165,9 @@ class ThreadedClient:
         self.thread1.daemon = True
         self.thread1.start()
 
-        # init logging
-        logging.basicConfig(format='%(asctime)s %(message)s', \
-                                datefmt='%I:%M:%S %p', \
-                                level=logging.DEBUG)
-        logging.warning('is when this event was logged.')
-
+        # logging.basicConfig(format='%(asctime)s %(message)s', \
+        #                         datefmt='- %I:%M:%S %p', \
+        #                         level=logging.DEBUG)
 
     def periodicCall(self):
         """
@@ -189,6 +197,45 @@ class ThreadedClient:
         #    time.sleep(rand.random() * 0.3)
         #    msg = rand.random()
         #    self.queue.put(msg)
+
+class QtHandler(logging.Handler):
+    def __init__(self):
+        logging.Handler.__init__(self)
+    def emit(self, record):
+        record = self.format(record)
+        if record: XStream.stdout().write('%s\n'%record)
+
+
+class XStream(QtCore.QObject):
+    _stdout = None
+    _stderr = None
+    messageWritten = QtCore.pyqtSignal(str)
+    def flush( self ):
+        pass
+    def fileno( self ):
+        return -1
+    def write( self, msg ):
+        if ( not self.signalsBlocked() ):
+            self.messageWritten.emit(unicode(msg))
+    @staticmethod
+    def stdout():
+        if ( not XStream._stdout ):
+            XStream._stdout = XStream()
+            sys.stdout = XStream._stdout
+        return XStream._stdout
+    @staticmethod
+    def stderr():
+        if ( not XStream._stderr ):
+            XStream._stderr = XStream()
+            sys.stderr = XStream._stderr
+        return XStream._stderr
+
+# init logging
+logger = logging.getLogger('p2p')
+handler = QtHandler()
+handler.setFormatter(logging.Formatter("%(asctime)s: %(message)s", '- %I:%M:%S %p'))
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 rand = random.Random()
 root = QtGui.QApplication(sys.argv)

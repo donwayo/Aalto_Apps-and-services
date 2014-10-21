@@ -9,6 +9,8 @@ from messages import *
 from settings import *
 from utils import *
 
+logger = logging.getLogger('p2p')
+
 # Main class. 
 class P2PMain():
 
@@ -44,7 +46,7 @@ class P2PMain():
 
     # Send ping type B to a peer
     def sendPing(self, idx):
-        logging.info("Sending a Pong (B) message to {0}".format(idx))
+        logger.info("Sending a Pong (B) message to {0}".format(idx))
         if idx in self.Peers:
             self.Peers[idx].ping('B')
             return True
@@ -71,7 +73,7 @@ class P2PMain():
     # Broadcast a ping message to all peers
     def broadcastPing(self, ptype='A'):
         if len(self.Peers) > 0:
-            logging.debug("Sending a broadcast ping type {0}.".format(ptype))
+            logger.debug("Sending a broadcast ping type {0}.".format(ptype))
             for peer in self.Peers:
                 self.Peers[peer].ping(ptype)
 
@@ -79,7 +81,7 @@ class P2PMain():
     def forwardQueryMessage(self, msg):
         if msg.TTL <= 1:
             return
-        logging.info("Sending a broadcast query from {0}".format(numberToIp(msg.SenderIP)))
+        logger.info("Sending a broadcast query from {0}".format(numberToIp(msg.SenderIP)))
         msg.TTL = msg.TTL - 1
         for i in self.Peers:
             self.Peers[i].sendMessage(msg)
@@ -88,7 +90,7 @@ class P2PMain():
     def forwardQueryHitMessage(self, msg, peername):
         if msg.TTL <= 1:
             return
-        logging.info("Forwarding a query hit message from {0}".format(numberToIp(msg.SenderIP)))
+        logger.info("Forwarding a query hit message from {0}".format(numberToIp(msg.SenderIP)))
         msg.TTL = msg.TTL - 1
         for i in self.Peers:
             if self.Peers[i].PeerName == peername:
@@ -98,7 +100,7 @@ class P2PMain():
     # Join a node in the network.
     def join(self, addr, port):
         # TODO: Should check that the parameters are sane here.
-        logging.debug("Attempting to connect to peer {0}:{1}".format(addr,port))
+        logger.debug("Attempting to connect to peer {0}:{1}".format(addr,port))
         peer = P2PConnection()
         peer.P2Pmain = self
         peer.join(addr, port)
@@ -107,7 +109,7 @@ class P2PMain():
 
     # Send a bye message to a selected peer.
     def sendBye(self, idx):
-        logging.info("Sending a Bye message to {0}.".format(idx))
+        logger.info("Sending a Bye message to {0}.".format(idx))
         if idx in self.Peers:
             self.Peers[idx].bye()
             return True
@@ -126,13 +128,13 @@ class P2PMain():
         mid = 0
         for idx in self.Peers:
             if self.Peers[idx].Joined:
-                logging.info('Querying peer {0}'.format(idx))
+                logger.info('Querying peer {0}'.format(idx))
                 mid = self.Peers[idx].query(query, mid)
 
         # TODO change this 0 to IP.
         if mid != 0:
             self.storeQueryInfo(mid, 0)
-            logging.info("Searching for {0} with Message Id: {1}".format(query, mid))
+            logger.info("Searching for {0} with Message Id: {1}".format(query, mid))
 
     # Perform a search on the local data and return matches
     def getMatches(self, query):
@@ -170,7 +172,7 @@ class P2PMain():
         if idx >= 0 and (idx in self.Peers):
             self.Peers[idx].close()
             del self.Peers[idx]
-            logging.info("Peer {0} left. ".format(idx))
+            logger.info("Peer {0} left. ".format(idx))
 
     # Handle an in coming connection.
     def acceptConnection(self,sock):
@@ -178,11 +180,11 @@ class P2PMain():
         peer.P2Pmain = self
         self.Peers[self.ConnectionCount] = peer
         self.ConnectionCount = self.ConnectionCount + 1
-        logging.info("New peer connection from {0}:{1}".format(sock.getpeername()[0], sock.getpeername()[1]))
+        logger.info("New peer connection from {0}:{1}".format(sock.getpeername()[0], sock.getpeername()[1]))
 
     # Close all connections and exit.
     def shutDown(self):
-        logging.info("Broadcasting bye message.", 1)
+        logger.info("Broadcasting bye message.")
         for i in self.Peers:
             self.Peers[i].bye()
             self.Peers[i].close()
@@ -224,7 +226,7 @@ class P2PConnection(asyncore.dispatcher):
         self.sendMessage(message)
         self.PeerPort = port
         self.JoinMessageId = message.GetMessageId()
-        logging.debug("Attempting to join with Message:\n {0}".format(message))
+        logger.debug("Attempting to join with Message:\n {0}".format(message))
 
         self.PeerName = "{0}:{1}".format(addr,port)
 
@@ -233,8 +235,8 @@ class P2PConnection(asyncore.dispatcher):
         if self.Joined:
             msg = ByeMessage(self.getIP())
             self.sendMessage(msg)
-            logging.info("Sending Bye message to {0}".format(self.getPeerName()))
-            logging.debug("{0}".format(msg))
+            logger.info("Sending Bye message to {0}".format(self.getPeerName()))
+            logger.debug("{0}".format(msg))
 
     def query(self, query, mid=0):
         if self.Joined:
@@ -242,8 +244,8 @@ class P2PConnection(asyncore.dispatcher):
             msg.SetQuery(query)
             msg.MessageId = mid
             self.sendMessage(msg)
-            logging.info("Sending Query message to {0}".format(self.getPeerName()))
-            logging.debug("{0}".format(msg))
+            logger.info("Sending Query message to {0}".format(self.getPeerName()))
+            logger.debug("{0}".format(msg))
             return msg.GetMessageId()
         else:
             return 0
@@ -290,10 +292,10 @@ class P2PConnection(asyncore.dispatcher):
         if self.Joined:
             msg = PingMessage(self.getIP())
             if ptype == 'A':
-                logging.debug("Send Ping request (A) to {0}".format(self.getPeerName()))
+                logger.debug("Send Ping request (A) to {0}".format(self.getPeerName()))
 
             else:
-                logging.debug("Send Ping request (B) to {0}".format(self.getPeerName()))
+                logger.debug("Send Ping request (B) to {0}".format(self.getPeerName()))
                 msg.TTL = 5
             
             self.sendMessage(msg)
@@ -305,28 +307,28 @@ class P2PConnection(asyncore.dispatcher):
             msg.MessageId = mid
 
             if pongType == 'A':
-                logging.debug("Send Pong message (A) to {0}".format(self.getPeerName()))
+                logger.debug("Send Pong message (A) to {0}".format(self.getPeerName()))
                 
             else:
                 msg.SetEntries(self.P2Pmain.getRndPeers(self.getName()))
-                logging.debug("Send Pong message (B) to {0}".format(self.getPeerName()))
+                logger.debug("Send Pong message (B) to {0}".format(self.getPeerName()))
 
             self.sendMessage(msg)
                 
 
     def sendMessage(self, msg):
         self.out_buffer = msg.GetBytes()
-        logging.debug("Sending message: {0}".format(msg))
+        logger.debug("Sending message: {0}".format(msg))
 
     def handle_read(self):
         receivedData = self.recv(8192)
         msg = ParseData(receivedData)
         if msg:
-            logging.debug('Receiving: {0}'.format(msg))
+            logger.debug('Receiving: {0}'.format(msg))
             self.handle_message(msg)
             
         elif len(receivedData) > 0:
-            logging.debug('Got trash from {0}'.format(self.getPeerName()))
+            logger.debug('Got trash from {0}'.format(self.getPeerName()))
 
     def handle_message(self, msg):
         
@@ -337,41 +339,41 @@ class P2PConnection(asyncore.dispatcher):
             if msg.MessageId == self.JoinMessageId and \
             not msg.Request:
                 self.Joined = True
-                logging.info("Joined successfully @ {0}".format(self.getPeerName()))
+                logger.info("Joined successfully @ {0}".format(self.getPeerName()))
                 self.JoinTime = time.time()
             elif msg.Request:
                 rmsg = JoinMessage(self.P2Pmain.HostIP, msg.MessageId)
                 self.sendMessage(rmsg)
                 self.Joined = True
                 self.JoinTime = time.time() 
-                logging.info("Responded to join request @ {0}".format(self.getPeerName()))
+                logger.info("Responded to join request @ {0}".format(self.getPeerName()))
             else:
-                logging.info("Message Ids don't match. {0} : {1} ".format(msg.MessageId, self.JoinMessageId))
+                logger.info("Message Ids don't match. {0} : {1} ".format(msg.MessageId, self.JoinMessageId))
         
         # Bye messages
         elif msg.Type == P2PMessage.MSG_BYE:
-            logging.info("Got Bye message. Closing connection with {0}.".format(self.getPeerName()))
+            logger.info("Got Bye message. Closing connection with {0}.".format(self.getPeerName()))
             self.P2Pmain.leave(self)
         
         # Ping messages
         elif msg.Type == P2PMessage.MSG_PING:
             if msg.TTL > 1:
-                logging.debug("Got Ping message (B) from {0}.".format(self.getPeerName()))
+                logger.debug("Got Ping message (B) from {0}.".format(self.getPeerName()))
                 self.pong(msg.MessageId, 'B')
             else:
-                logging.debug("Got Ping message (A) from {0}.".format(self.getPeerName()))
+                logger.debug("Got Ping message (A) from {0}.".format(self.getPeerName()))
                 self.pong(msg.MessageId, 'A')
                 
         # Pong messages
         elif msg.Type == P2PMessage.MSG_PONG:
             if msg.MessageId == self.LastPing:
                 if msg.PayloadLength > 0:
-                    logging.debug("Got Pong message (B) from {0}.".format(self.getPeerName()))
+                    logger.debug("Got Pong message (B) from {0}.".format(self.getPeerName()))
                     entries = msg.GetEntries()
                     if entries == None:
-                        logging.debug("No new peers from last Pong message.")
+                        logger.debug("No new peers from last Pong message.")
                     else:
-                        logging.debug("Attempting to connect to {0} new peers.".format(len(entries)))
+                        logger.debug("Attempting to connect to {0} new peers.".format(len(entries)))
                    
                         # Try to connect to other peers.     
                         for e in entries:
@@ -380,13 +382,13 @@ class P2PConnection(asyncore.dispatcher):
                             if not self.P2Pmain.isConnected(ip, port):
                                 self.P2Pmain.join(ip,port)
                             else:
-                                logging.debug("Peer {0}:{1} is already connected.".format(ip,port))
+                                logger.debug("Peer {0}:{1} is already connected.".format(ip,port))
                 else:
-                    logging.debug("Got Pong message (A) from {0}.".format(self.getPeerName()))
+                    logger.debug("Got Pong message (A) from {0}.".format(self.getPeerName()))
             else:
-                logging.debug("Ignored a Pong message.")
+                logger.debug("Ignored a Pong message.")
         elif msg.Type == P2PMessage.MSG_QUERY:
-            logging.debug("Query Message\n{0}".format(msg))
+            logger.debug("Query Message\n{0}".format(msg))
 
             # Check if we have already recieved a query with the same id.
             mid = msg.MessageId
@@ -400,16 +402,16 @@ class P2PConnection(asyncore.dispatcher):
                 self.P2Pmain.forwardQueryMessage(msg)
                 # Check local files and answer the query.
                 matches = self.P2Pmain.getMatches(query)
-                logging.info("Matches: {0}".format(matches))
+                logger.info("Matches: {0}".format(matches))
                 if len(matches) > 0:
                     qhitMsg = QueryHitMessage(self.getIP(), mid)
                     qhitMsg.SetEntries(matches)
                     self.sendMessage(qhitMsg)
             else:
                 # Ignore the query 
-                logging.info("Message ID existed -> drop the message")
+                logger.info("Message ID existed -> drop the message")
         elif msg.Type == P2PMessage.MSG_QHIT:
-            logging.debug("QueryHit Message\n{0}".format(msg))
+            logger.debug("QueryHit Message\n{0}".format(msg))
 
             mid = msg.MessageId
             queryInfo = self.P2Pmain.getQueryInfo(mid)
@@ -417,40 +419,40 @@ class P2PConnection(asyncore.dispatcher):
                 # display the result if the query is from this node
                 if queryInfo['from'] == 0:
                     entries = msg.GetEntries()
-                    logging.info("Result from: {0}".format(socket.inet_ntoa(struct.pack('!I',msg.SenderIP))))
+                    logger.info("Result from: {0}".format(socket.inet_ntoa(struct.pack('!I',msg.SenderIP))))
                     for eid, val in entries.items():
-                        logging.info("ID: {0} - Value: {1}".format(eid, val))
+                        logger.info("ID: {0} - Value: {1}".format(eid, val))
                 # otherwise, forward it back based on our history 
                 else:
                     self.P2Pmain.forwardQueryHitMessage(msg, queryInfo['from'])
 
             else:
-                logging.info("Not found matched query message -> drop the message")
+                logger.info("Not found matched query message -> drop the message")
         else:
-            logging.debug("Unhandled message from {0} type {1}.".format(self.getPeerName(), msg.Type))
+            logger.debug("Unhandled message from {0} type {1}.".format(self.getPeerName(), msg.Type))
 
     # Need to define how to handle errors here and fail safely.
     def handle_error(self):
         nil, t, v, tbinfo = compact_traceback()
         if v[0] == errno.ECONNREFUSED:
-            logging.info("Connection refused from {0}.".format(self.PeerName))
+            logger.info("Connection refused from {0}.".format(self.PeerName))
             self.handle_close()
         elif v[0] == errno.ETIMEDOUT:
-            logging.info("Connection timed out to {0}.".format(self.PeerName))
+            logger.info("Connection timed out to {0}.".format(self.PeerName))
             self.handle_close()
         elif v[0] == errno.ENETDOWN:
-            logging.info("Network is down {0}.".format(self.PeerName))
+            logger.info("Network is down {0}.".format(self.PeerName))
             self.handle_close()
         else:
-            logging.error("Error\n\t{0}\n\t{1}\n\t{2}".format(t, v, tbinfo))
+            logger.error("Error\n\t{0}\n\t{1}\n\t{2}".format(t, v, tbinfo))
             self.handle_close()
 
     def handle_close(self):
-        logging.info("Disconnected from {0}.".format(self.getPeerName()))
+        logger.info("Disconnected from {0}.".format(self.getPeerName()))
         self.P2Pmain.leave(self)
 
     def handle_connect(self):
-        logging.info("Connected to {0}.".format(self.getPeerName()))
+        logger.info("Connected to {0}.".format(self.getPeerName()))
 
     def thisAsAString(self):
         if self.Joined:
@@ -476,7 +478,7 @@ class P2PListener(asyncore.dispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-            logging.info('Incoming connection from {0}:{1}'.format(addr[0], addr[1]))
+            logger.info('Incoming connection from {0}:{1}'.format(addr[0], addr[1]))
             self.P2Pmain.acceptConnection(sock)
 
     def writable(self):

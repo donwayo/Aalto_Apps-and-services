@@ -92,6 +92,8 @@ class GuiPart(QtGui.QMainWindow):
 
     def bindUi(self, MainWindow):
     	self.pb_join.clicked.connect(self.join)
+        self.pb_bye.clicked.connect(self.bye)
+        self.pb_search.clicked.connect(self.search)
 
     def __init__(self, queue, endcommand, *args):
         QtGui.QMainWindow.__init__(self, *args)
@@ -102,8 +104,14 @@ class GuiPart(QtGui.QMainWindow):
         self.endcommand = endcommand
         self.p2p = P2PMain('localhost', PORT, queue)
 
+    def bye(self):
+        self.queue.put(['b', int(self.le_bye.text())])
+
     def join(self):
-        self.queue.put(['j', self.le_join.text()])
+        self.queue.put(['j', str(self.le_join.text())])
+
+    def search(self):
+        self.queue.put(['s', str(self.le_search.text())])
 
     def closeEvent(self, ev):
         """
@@ -118,18 +126,17 @@ class GuiPart(QtGui.QMainWindow):
         """
         Handle all the messages currently in the queue (if any).
         """
-        #msg = str(self.p2p)
-        #self.editor.setPlainText(str(msg))
+        status = self.p2p.getStatus()
 
-        #while self.queue.qsize():
-        #    try:
-        #        # msg = self.queue.get(0)
-        #        msg = str(self.p2p)
-                # Check contents of message and do what it says
-                # As a test, we simply print it
-        #        self.editor.insertPlainText(str(msg))
-        #    except Queue.Empty:
-        #        pass
+        self.lw_messages.clear()
+        self.lw_peers.clear()
+
+        for m in status['messages']:
+            self.lw_messages.addItem(m)
+
+        for p in status['peers']:
+            self.lw_peers.addItem(p)
+
 
 class ThreadedClient:
     """
@@ -151,7 +158,7 @@ class ThreadedClient:
                            QtCore.SIGNAL("timeout()"),
                            self.periodicCall)
         # Start the timer -- this replaces the initial call to periodicCall
-        self.timer.start(1000)
+        self.timer.start(500)
 
         # Set up the thread to do asynchronous I/O
         # More can be made if necessary
@@ -179,7 +186,7 @@ class ThreadedClient:
         self.running = 0
 
     def workerThread1(self):
-        asyncore.loop(10)
+        asyncore.loop(1)
 
 rand = random.Random()
 root = QtGui.QApplication(sys.argv)

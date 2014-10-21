@@ -3,6 +3,7 @@ import asyncore
 import time
 import random
 import binascii
+import threading
 import errno
 import logging
 from messages import *
@@ -22,6 +23,8 @@ class P2PMain():
         self.LastBPingTime = 0
         self.HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]
         self.queue = queue
+        self.lock = threading.RLock()
+        self.status = ''
 
     # Handle messages from the queue.
     def handle_queue(self):
@@ -50,6 +53,23 @@ class P2PMain():
                     # Quit
                     elif action[0] == 'q':
                         self.shutDown()
+
+
+    # Get an object describing the status
+    def getStatus(self):
+        with self.lock:
+            return self.status
+
+    def updateStatus(self):
+        with self.lock:
+            self.status = { \
+                'peers': [], \
+                'messages': [] \
+                }
+            for i in self.Peers:    
+                self.status['peers'].append("{0}\t{1}".format(i,self.Peers[i].thisAsAString()))
+            for q in self.QueryMessages:
+                self.status['messages'].append("{2}\t{0}\t({1}s)\n".format(self.QueryMessages[q]['from'],time.time()-self.QueryMessages[q]['time'], q))
 
     # Get 5 random peers except peer.
     def getRndPeers(self, peer):
@@ -83,6 +103,7 @@ class P2PMain():
     def tick(self):
         # Consule from the queue
         self.handle_queue()
+        self.updateStatus()
 
         # Things to be executed every 5 secs
         if time.time() - self.LastPingTime > 5:

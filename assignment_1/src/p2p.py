@@ -46,7 +46,7 @@ class P2PMain():
 
                     # Bye
                     elif action[0] == 'b':
-                        self.bye(int(action[1]))
+                        self.sendBye(int(action[1]))
 
                     # Search
                     elif action[0] == 's':

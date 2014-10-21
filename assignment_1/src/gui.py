@@ -237,7 +237,7 @@ logger = logging.getLogger('p2p')
 handler = QtHandler()
 handler.setFormatter(logging.Formatter("%(asctime)s: %(message)s", '- %H:%M:%S'))
 logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 rand = random.Random()
 root = QtGui.QApplication(sys.argv)

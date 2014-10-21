@@ -1,5 +1,7 @@
 import time
 import sys
+import struct
+import socket
 from settings import *
 
 # def log(s,l):
@@ -8,11 +10,10 @@ from settings import *
 #         print("[{0}] {1}".format(time.ctime(),s))
 
 def ipToNumber(ip):
-    return socket.inet_ntoa(struct.pack("!I", ip))
+    return struct.unpack("!I",socket.inet_aton(ip))
 
 def numberToIp(n):
-    ip = struct.unpack("!I", socket.inet_aton(n))[0]
-    return ip
+    return socket.inet_ntoa(struct.pack("!I", n))
 
 # Copied from asyncore source
 def compact_traceback():

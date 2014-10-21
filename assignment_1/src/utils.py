@@ -2,10 +2,17 @@ import time
 import sys
 from settings import *
 
-def log(s,l):
-    if l <= LOG_LVL:
-    	# \x1b
-        print("[{0}] {1}".format(time.ctime(),s))
+# def log(s,l):
+#     if l <= LOG_LVL:
+#     	# \x1b
+#         print("[{0}] {1}".format(time.ctime(),s))
+
+def ipToNumber(ip):
+    return socket.inet_ntoa(struct.pack("!I", ip))
+
+def numberToIp(n):
+    ip = struct.unpack("!I", socket.inet_aton(n))[0]
+    return ip
 
 # Copied from asyncore source
 def compact_traceback():

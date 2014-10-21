@@ -377,7 +377,7 @@ class P2PConnection(asyncore.dispatcher):
                             if not self.P2Pmain.isConnected(ip, port):
                                 self.P2Pmain.join(ip,port)
                             else:
-                                log("Peer {0}:{1} is already connected.".format(ip,port),2)
+                                log("Peer {0}:{1} is already connected.".format(ip,port),3)
                 else:
                     log("Got Pong message (A) from {0}.".format(self.getPeerName()), 2)
             else:
@@ -433,6 +433,9 @@ class P2PConnection(asyncore.dispatcher):
             self.handle_close()
         elif v[0] == errno.ETIMEDOUT:
             log("Connection timed out to {0}.".format(self.PeerName), 2)
+            self.handle_close()
+        elif v[0] == errno.ENETDOWN:
+            log("Network is down {0}.".format(self.PeerName), 2)
             self.handle_close()
         else:
             log("Error\n\t{0}\n\t{1}\n\t{2}".format(t, v, tbinfo),1)

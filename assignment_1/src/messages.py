@@ -5,10 +5,11 @@ import socket
 import binascii
 import hashlib
 import logging
+import random
 
 logger = logging.getLogger('p2p')
 
-#
+# Base clas for P2P Messages
 class P2PMessage():
 
     MSG_PING = 0x00
@@ -67,7 +68,7 @@ class P2PMessage():
             binascii.hexlify(self.Payload))
 
     def GetNewId(self):
-        return struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time())).digest()[:4])[0]
+        return struct.unpack('!I', hashlib.md5("{0}{1}".format(self.SenderIP, time.time()+random.random())).digest()[:4])[0]
     
     def GetHeaderBytes(self):
         MessageIdString = str(self.SenderPort) + str(self.SenderPort) +  str(time.time())

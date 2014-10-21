@@ -151,11 +151,6 @@
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action">
-   <property name="text">
-    <string>Menu</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>

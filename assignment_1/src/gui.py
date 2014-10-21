@@ -43,10 +43,6 @@ class GuiPart(QtGui.QMainWindow):
         self.sa_log.setGeometry(QtCore.QRect(10, 10, 351, 341))
         self.sa_log.setWidgetResizable(True)
         self.sa_log.setObjectName(_fromUtf8("sa_log"))
-        # self.scrollAreaWidgetContents = QtGui.QWidget()
-        # self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 349, 339))
-        # self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
-        #self.sa_log.setWidget(self.scrollAreaWidgetContents)
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName(_fromUtf8("tab_2"))
@@ -115,7 +111,8 @@ class GuiPart(QtGui.QMainWindow):
         self.queue = queue
         # We show the result of the thread in the gui, instead of the console
         self.setupUi(self)
-        
+        self.peers = {}
+        self.messages = {}
         self.endcommand = endcommand
         self.p2p = P2PMain('localhost', PORT, queue)
 
@@ -129,36 +126,46 @@ class GuiPart(QtGui.QMainWindow):
         self.queue.put(['s', str(self.le_search.text())])
 
     def closeEvent(self, ev):
-        """
-        We just call the endcommand when the window is closed
-        instead of presenting a button for that purpose.
-        """
         self.queue.put(['q',0])
-
         self.endcommand()
 
     def processIncoming(self):
-        """
-        Handle all the messages currently in the queue (if any).
-        """
         status = self.p2p.getStatus()
 
-        self.lw_messages.clear()
-        self.lw_peers.clear()
+        # Remove messages that are not present anymore
+        for m in self.messages.keys():
+            if m not in status['messages']:
+                self.messages[m].setText('Dead')
+                self.lw_messages.takeItem(self.lw_messages.row(self.messages[m]))
+                del self.messages[m]
 
+        # Remove peers that are not present anymore
+        for p in self.peers.keys():
+            if not p in status['peers']:
+                self.lw_peers.takeItem(self.lw_peers.row(self.peers[p]))
+                del self.peers[p]
+
+        # Update messages (from, time, query)
         for m in status['messages']:
-            self.lw_messages.addItem(m)
+            text = '{2}\t{0} ({1})'.format(status['messages'][m][2],status['messages'][m][0],m)
+            if m in self.messages:
+                self.messages[m].setText(text)
+            else:
+                self.messages[m] = QtGui.QListWidgetItem(text)
+                self.lw_messages.addItem(self.messages[m])
 
+        # Update peers
         for p in status['peers']:
-            self.lw_peers.addItem(p)
+            text = '{1}\t{0}'.format(status['peers'][p],p)
+            if p in self.peers:
+                self.peers[p].setText(text)
+            else:
+                self.peers[p] = QtGui.QListWidgetItem(text)
+                self.lw_peers.addItem(self.peers[p])
+        
 
 
 class ThreadedClient:
-    """
-    Launch the main part of the GUI and the worker thread. periodicCall and
-    endApplication could reside in the GUI part, but putting them here
-    means that you have all the thread controls in a single place.
-    """
     def __init__(self):
         # Create the queue
         self.queue = Queue.Queue()
@@ -182,14 +189,7 @@ class ThreadedClient:
         self.thread1.daemon = True
         self.thread1.start()
 
-        # logging.basicConfig(format='%(asctime)s %(message)s', \
-        #                         datefmt='- %I:%M:%S %p', \
-        #                         level=logging.DEBUG)
-
     def periodicCall(self):
-        """
-        Check every 100 ms if there is something new in the queue.
-        """
         self.gui.processIncoming()
         if not self.running:
             root.quit()
@@ -206,7 +206,6 @@ class QtHandler(logging.Handler):
     def emit(self, record):
         record = self.format(record)
         if record: XStream.stdout().write('%s\n'%record)
-
 
 class XStream(QtCore.QObject):
     _stdout = None
@@ -235,7 +234,7 @@ class XStream(QtCore.QObject):
 # init logging
 logger = logging.getLogger('p2p')
 handler = QtHandler()
-handler.setFormatter(logging.Formatter("%(asctime)s: %(message)s", '- %H:%M:%S'))
+handler.setFormatter(logging.Formatter("%(asctime)s %(message)s", '[%H:%M:%S]'))
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 

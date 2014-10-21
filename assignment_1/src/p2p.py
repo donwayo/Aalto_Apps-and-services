@@ -65,13 +65,13 @@ class P2PMain():
     def updateStatus(self):
         with self.lock:
             self.status = { \
-                'peers': [], \
-                'messages': [] \
+                'peers': {}, \
+                'messages': {} \
                 }
             for i in self.Peers:    
-                self.status['peers'].append("{0}\t{1}".format(i,self.Peers[i].thisAsAString()))
+                self.status['peers'][str(i)] = self.Peers[i].thisAsAString()
             for q in self.QueryMessages:
-                self.status['messages'].append("{2}\t{0}\t({1}s)\n".format(self.QueryMessages[q]['from'],time.time()-self.QueryMessages[q]['time'], q))
+                self.status['messages'][str(q)] = [self.QueryMessages[q]['from'], time.time()-self.QueryMessages[q]['time'], self.QueryMessages[q]['query']]
 
     # Get 5 random peers except peer.
     def getRndPeers(self, peer):
@@ -117,11 +117,8 @@ class P2PMain():
             self.broadcastPing('B')
 
             # Check connection to bootstrap and reconnect if necesary
-            if not self.isConnected(BOOTSTRAP, PORT):
+            if not self.isConnected(BOOTSTRAP, PORT) and AUTOJOIN:
                 self.join(BOOTSTRAP, PORT)
-            # Check command line and reconnect
-            # if not cmdline.connected:
-            #    cmdline = CmdlineClient(sys.stdin)
 
     # Broadcast a ping message to all peers
     def broadcastPing(self, ptype='A'):
@@ -156,9 +153,10 @@ class P2PMain():
         logger.debug("Attempting to connect to peer {0}:{1}".format(addr,port))
         peer = P2PConnection()
         peer.P2Pmain = self
-        peer.join(addr, port)
         self.Peers[self.ConnectionCount] = peer
         self.ConnectionCount = self.ConnectionCount + 1
+        peer.join(addr, port)
+        
 
     # Send a bye message to a selected peer.
     def sendBye(self, idx):
@@ -179,14 +177,13 @@ class P2PMain():
 
         # TODO change this 0 to IP.
         if mid != 0:
-            self.storeQueryInfo(mid, 0)
+            self.storeQueryInfo(mid, 0, query)
             logger.info("Searching for {0} with Message Id: {1}".format(query, mid))
 
     # Perform a search on the local data and return matches
     def getMatches(self, query):
         global LOCAL_ENTRIES
         matches = {}
-        query = query.partition('\x00')[0]
         for key, info in LOCAL_ENTRIES.items():
             if query.strip() == key.strip():
                 matches[info['id']] = info['value']
@@ -199,10 +196,11 @@ class P2PMain():
         return None
 
     # Store the given query message to our message list
-    def storeQueryInfo(self, mid, senderIp):
+    def storeQueryInfo(self, mid, senderIp, query=''):
         self.QueryMessages[mid] = { \
             'from': senderIp, \
-            'time': time.time() \
+            'time': time.time(), \
+            'query': query\
         }
 
     # Remove peer from connection list.
@@ -267,14 +265,18 @@ class P2PConnection(asyncore.dispatcher):
     def join(self, addr, port):
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect( (addr, port) )
-        message = JoinMessage(self.P2Pmain.HostIP)
-        self.sendMessage(message)
-        self.PeerPort = port
-        self.JoinMessageId = message.GetMessageId()
-        logger.debug("Attempting to join with Message:\n {0}".format(message))
+        try:
+            self.connect( (addr, port) )
+            message = JoinMessage(self.P2Pmain.HostIP)
+            self.JoinMessageId = message.GetMessageId()
+            self.sendMessage(message)
+            self.PeerPort = port
+            logger.debug("Attempting to join with Message:\n {0}".format(message))
+            self.PeerName = "{0}:{1}".format(addr,port)
 
-        self.PeerName = "{0}:{1}".format(addr,port)
+        except Exception, e:
+            logger.error("Error connecting to: {0}:{1}".format(addr,port))
+            self.handle_close()
 
     # Send a bye message to a node.
     def bye(self):
@@ -394,7 +396,7 @@ class P2PConnection(asyncore.dispatcher):
                 self.JoinTime = time.time() 
                 logger.info("Responded to join request @ {0}".format(self.getPeerName()))
             else:
-                logger.info("Message Ids don't match. {0} : {1} ".format(msg.MessageId, self.JoinMessageId))
+                logger.info("Message Ids don't match. {0} : {1} @ {2} ".format(msg.MessageId, self.JoinMessageId), self.getPeerName())
         
         # Bye messages
         elif msg.Type == P2PMessage.MSG_BYE:
@@ -441,9 +443,9 @@ class P2PConnection(asyncore.dispatcher):
             queryInfo = self.P2Pmain.getQueryInfo(mid)
             if queryInfo == None and msg.PayloadLength > 0:
                 senderIP = msg.SenderIP
-                query = msg.Payload
+                query = msg.Payload.partition('\x00')[0]
                 # store in the list of query messages
-                self.P2Pmain.storeQueryInfo(mid, self.PeerName)
+                self.P2Pmain.storeQueryInfo(mid, self.PeerName, query)
                 # Resend the query to all other peers.
                 self.P2Pmain.forwardQueryMessage(msg)
                 # Check local files and answer the query.
@@ -502,11 +504,11 @@ class P2PConnection(asyncore.dispatcher):
 
     def thisAsAString(self):
         if self.Joined:
-            return "Peer connection to {0}\n\tAlive for {1}".format(self.getPeerName(), time.time()-self.JoinTime)
+            return "{0}\tPeer connected.\n\tAlive for {1}".format(self.getPeerName(), time.time()-self.JoinTime)
         elif self.connected:
-            return "Attempting connection to {0}\n\tWaiting for Join response.".format(self.getPeerName())
+            return "{0}\tAttempting connection.\n\tWaiting for Join response.".format(self.getPeerName())
         else:
-            return "Attempting connection to {0}\n\tWaiting for TCP handshake.".format(self.getPeerName())
+            return "{0}\tAttempting connection.\n\tWaiting for TCP handshake.".format(self.getPeerName())
     def __str__(self):
         return self.thisAsAString()
 

@@ -82,8 +82,8 @@ class GuiPart(QtGui.QMainWindow):
         self._console.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self._console.ensureCursorVisible()
         # set log console
-        XStream.stdout().messageWritten.connect( self._console.insertPlainText )
-        XStream.stderr().messageWritten.connect( self._console.insertPlainText )
+        XStream.stdout().messageWritten.connect( self.updateConsole )
+        XStream.stderr().messageWritten.connect( self.updateConsole )
         self.sa_log.setWidget(self._console)
 
         self.retranslateUi(MainWindow)
@@ -91,7 +91,10 @@ class GuiPart(QtGui.QMainWindow):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         self.bindUi(MainWindow)
 
-
+    def updateConsole(self, text):
+        self._console.insertPlainText(text)
+        vbar = self._console.verticalScrollBar()
+        vbar.setValue(vbar.maximum())
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "P2P", None))
@@ -232,9 +235,9 @@ class XStream(QtCore.QObject):
 # init logging
 logger = logging.getLogger('p2p')
 handler = QtHandler()
-handler.setFormatter(logging.Formatter("%(asctime)s: %(message)s", '- %I:%M:%S %p'))
+handler.setFormatter(logging.Formatter("%(asctime)s: %(message)s", '- %H:%M:%S'))
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 rand = random.Random()
 root = QtGui.QApplication(sys.argv)

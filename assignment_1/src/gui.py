@@ -18,7 +18,6 @@ class GuiPart(QtGui.QMainWindow):
         self.p2p = P2PMain('localhost', PORT)
 
 
-
     def closeEvent(self, ev):
         """
         We just call the endcommand when the window is closed
@@ -73,6 +72,12 @@ class ThreadedClient:
         self.thread1 = threading.Thread(target=self.workerThread1)
         self.thread1.daemon = True
         self.thread1.start()
+
+        # init logging
+        logging.basicConfig(format='%(asctime)s %(message)s', \
+                                datefmt='%I:%M:%S %p', \
+                                level=logging.DEBUG)
+        logging.warning('is when this event was logged.')
 
 
     def periodicCall(self):

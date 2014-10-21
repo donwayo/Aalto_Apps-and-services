@@ -135,9 +135,11 @@ class P2PMain():
 
     # Perform a search on the local data and return matches
     def getMatches(self, query):
+        global LOCAL_ENTRIES
         matches = {}
+        query = query.partition('\x00')[0]
         for key, info in LOCAL_ENTRIES.items():
-            if query == key:
+            if query.strip() == key.strip():
                 matches[info['id']] = info['value']
         return matches
 
@@ -397,6 +399,7 @@ class P2PConnection(asyncore.dispatcher):
                 self.P2Pmain.forwardQueryMessage(msg)
                 # Check local files and answer the query.
                 matches = self.P2Pmain.getMatches(query)
+                log("Matches: {0}".format(matches), 2)
                 if len(matches) > 0:
                     qhitMsg = QueryHitMessage(self.getIP(), mid)
                     qhitMsg.SetEntries(matches)

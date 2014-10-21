@@ -3,6 +3,7 @@ import asyncore
 import time
 import random
 import binascii
+import threading
 import errno
 import logging
 from messages import *
@@ -15,7 +16,7 @@ logger = logging.getLogger('p2p')
 class P2PMain():
 
     # Class constructor
-    def __init__(self, host, port):
+    def __init__(self, host, port, queue=None):
         self.P2Pserver = P2PListener(host, port, self)
         self.Peers = {}
         self.ConnectionCount = 0
@@ -23,6 +24,54 @@ class P2PMain():
         self.LastPingTime = 0
         self.LastBPingTime = 0
         self.HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]
+        self.queue = queue
+        self.lock = threading.RLock()
+        self.status = ''
+
+    # Handle messages from the queue.
+    def handle_queue(self):
+        if not self.queue == None:
+            while not self.queue.empty():
+                action = self.queue.get()
+                if len(action) > 1:
+
+                    # Join
+                    if action[0] == 'j':
+                        ipaddr = action[1].split(':')
+                        nport = PORT
+                        if len(ipaddr) == 2:
+                            nport = int(ipaddr[1])
+                        ipaddr = ipaddr[0]
+                        self.join(ipaddr, nport)
+
+                    # Bye
+                    elif action[0] == 'b':
+                        self.bye(int(action[1]))
+
+                    # Search
+                    elif action[0] == 's':
+                        self.search(action[1])
+
+                    # Quit
+                    elif action[0] == 'q':
+                        self.shutDown()
+
+
+    # Get an object describing the status
+    def getStatus(self):
+        with self.lock:
+            return self.status
+
+    def updateStatus(self):
+        with self.lock:
+            self.status = { \
+                'peers': [], \
+                'messages': [] \
+                }
+            for i in self.Peers:    
+                self.status['peers'].append("{0}\t{1}".format(i,self.Peers[i].thisAsAString()))
+            for q in self.QueryMessages:
+                self.status['messages'].append("{2}\t{0}\t({1}s)\n".format(self.QueryMessages[q]['from'],time.time()-self.QueryMessages[q]['time'], q))
 
     # Get 5 random peers except peer.
     def getRndPeers(self, peer):
@@ -54,6 +103,10 @@ class P2PMain():
 
     # Periodic stuff goes here:
     def tick(self):
+        # Consule from the queue
+        self.handle_queue()
+        self.updateStatus()
+
         # Things to be executed every 5 secs
         if time.time() - self.LastPingTime > 5:
             self.LastPingTime = time.time()
@@ -114,13 +167,6 @@ class P2PMain():
             self.Peers[idx].bye()
             return True
         return False
-
-    # # Perform a query to a specific node
-    # def sendQuery(self, idx, query, mid):
-    #     if idx in self.Peers:
-    #         self.Peers[idx].query(query, mid)
-    #         return True
-    #     return False
 
     # Search
     def search(self, query):

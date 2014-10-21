@@ -43,9 +43,9 @@ class GuiPart(QtGui.QMainWindow):
         self.sa_log.setGeometry(QtCore.QRect(10, 10, 351, 341))
         self.sa_log.setWidgetResizable(True)
         self.sa_log.setObjectName(_fromUtf8("sa_log"))
-        self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 349, 339))
-        self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
+        # self.scrollAreaWidgetContents = QtGui.QWidget()
+        # self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 349, 339))
+        # self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         #self.sa_log.setWidget(self.scrollAreaWidgetContents)
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()
@@ -76,11 +76,12 @@ class GuiPart(QtGui.QMainWindow):
         self.action = QtGui.QAction(MainWindow)
         self.action.setObjectName(_fromUtf8("action"))
 
+        # create log console
         self._console = QtGui.QTextBrowser(self)
         self._console.setGeometry(QtCore.QRect(0, 0, 349, 339))
         self._console.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self._console.ensureCursorVisible()
-
+        # set log console
         XStream.stdout().messageWritten.connect( self._console.insertPlainText )
         XStream.stderr().messageWritten.connect( self._console.insertPlainText )
         self.sa_log.setWidget(self._console)
@@ -88,6 +89,7 @@ class GuiPart(QtGui.QMainWindow):
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.bindUi(MainWindow)
 
 
 
@@ -100,6 +102,11 @@ class GuiPart(QtGui.QMainWindow):
         self.pb_bye.setText(_translate("MainWindow", "Send Bye", None))
         self.action.setText(_translate("MainWindow", "Menu", None))
 
+    def bindUi(self, MainWindow):
+    	self.pb_join.clicked.connect(self.join)
+        self.pb_bye.clicked.connect(self.bye)
+        self.pb_search.clicked.connect(self.search)
+
     def __init__(self, queue, endcommand, *args):
         QtGui.QMainWindow.__init__(self, *args)
         self.queue = queue
@@ -107,15 +114,23 @@ class GuiPart(QtGui.QMainWindow):
         self.setupUi(self)
         
         self.endcommand = endcommand
-        self.p2p = P2PMain('localhost', PORT)
+        self.p2p = P2PMain('localhost', PORT, queue)
 
+    def bye(self):
+        self.queue.put(['b', int(self.le_bye.text())])
+
+    def join(self):
+        self.queue.put(['j', str(self.le_join.text())])
+
+    def search(self):
+        self.queue.put(['s', str(self.le_search.text())])
 
     def closeEvent(self, ev):
         """
         We just call the endcommand when the window is closed
         instead of presenting a button for that purpose.
         """
-        #self.p2p.shutDown()
+        self.queue.put(['q',0])
 
         self.endcommand()
 
@@ -123,18 +138,17 @@ class GuiPart(QtGui.QMainWindow):
         """
         Handle all the messages currently in the queue (if any).
         """
-        #msg = str(self.p2p)
-        #self.editor.setPlainText(str(msg))
+        status = self.p2p.getStatus()
 
-        #while self.queue.qsize():
-        #    try:
-        #        # msg = self.queue.get(0)
-        #        msg = str(self.p2p)
-                # Check contents of message and do what it says
-                # As a test, we simply print it
-        #        self.editor.insertPlainText(str(msg))
-        #    except Queue.Empty:
-        #        pass
+        self.lw_messages.clear()
+        self.lw_peers.clear()
+
+        for m in status['messages']:
+            self.lw_messages.addItem(m)
+
+        for p in status['peers']:
+            self.lw_peers.addItem(p)
+
 
 class ThreadedClient:
     """
@@ -156,7 +170,7 @@ class ThreadedClient:
                            QtCore.SIGNAL("timeout()"),
                            self.periodicCall)
         # Start the timer -- this replaces the initial call to periodicCall
-        self.timer.start(1000)
+        self.timer.start(500)
 
         # Set up the thread to do asynchronous I/O
         # More can be made if necessary
@@ -180,23 +194,8 @@ class ThreadedClient:
     def endApplication(self):
         self.running = 0
 
-
     def workerThread1(self):
-        """
-        This is where we handle the asynchronous I/O. For example, it may be
-        a 'select()'.
-        One important thing to remember is that the thread has to yield
-        control.
-        """
-        asyncore.loop(10)
-
-        #while self.running:
-            # To simulate asynchronous I/O, we create a random number at
-            # random intervals. Replace the following 2 lines with the real
-            # thing.
-        #    time.sleep(rand.random() * 0.3)
-        #    msg = rand.random()
-        #    self.queue.put(msg)
+        asyncore.loop(1)
 
 class QtHandler(logging.Handler):
     def __init__(self):

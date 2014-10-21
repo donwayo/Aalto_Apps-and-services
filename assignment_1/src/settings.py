@@ -7,7 +7,7 @@ DEFAULT_TTL = 5
 LOCAL_ENTRIES = {
 	"group10": {
 		"id": 1,
-		"value": "1b2c3d55"
+		"value": 123123123
 	}
 }
 

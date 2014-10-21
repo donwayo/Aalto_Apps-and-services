@@ -55,9 +55,9 @@ class CmdlineClient(asyncore.file_dispatcher):
 
             # Change loglvl (doesn't work!)
             elif receivedData[0] == 'l' and len(receivedData) > 1:
-                global LOG_LVL
-                LOG_LVL = int(receivedData[1:])
-                self.send("Changed loglvl to {0}\n".format(LOG_LVL))
+                loglvl = int(receivedData[1:]) * 10
+                logging.getLogger().setLevel(loglvl)
+                self.send("Changed loglvl to {0}\n".format(loglvl))
 
             # Send ping
             elif receivedData[0] == 'p' and len(receivedData) > 1:
@@ -81,7 +81,7 @@ if len(sys.argv) > 1:
 # init logging
 logging.basicConfig(format='- %(asctime)s %(message)s', \
                         datefmt='%I:%M:%S %p', \
-                        level=logging.DEBUG)
+                        level=logging.INFO)
 
 p2p = P2PMain('localhost', serverPort)
 cmdline = CmdlineClient(sys.stdin)

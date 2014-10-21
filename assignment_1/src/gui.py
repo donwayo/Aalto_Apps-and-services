@@ -100,16 +100,17 @@ class GuiPart(QtGui.QMainWindow):
         self.setupUi(self)
         
         self.endcommand = endcommand
-        self.p2p = P2PMain('localhost', PORT)
+        self.p2p = P2PMain('localhost', PORT, queue)
 
     def join(self):
+        self.queue.put(['j', self.le_join.text()])
 
     def closeEvent(self, ev):
         """
         We just call the endcommand when the window is closed
         instead of presenting a button for that purpose.
         """
-        #self.p2p.shutDown()
+        self.queue.put(['q',0])
 
         self.endcommand()
 
@@ -176,7 +177,6 @@ class ThreadedClient:
 
     def endApplication(self):
         self.running = 0
-
 
     def workerThread1(self):
         asyncore.loop(10)

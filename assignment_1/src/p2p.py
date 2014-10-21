@@ -13,7 +13,7 @@ from utils import *
 class P2PMain():
 
     # Class constructor
-    def __init__(self, host, port):
+    def __init__(self, host, port, queue=None):
         self.P2Pserver = P2PListener(host, port, self)
         self.Peers = {}
         self.ConnectionCount = 0
@@ -21,6 +21,35 @@ class P2PMain():
         self.LastPingTime = 0
         self.LastBPingTime = 0
         self.HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]
+        self.queue = queue
+
+    # Handle messages from the queue.
+    def handle_queue(self):
+        if not self.queue == None:
+            while not self.queue.empty():
+                action = self.queue.get()
+                if len(action) > 1:
+
+                    # Join
+                    if action[0] == 'j':
+                        ipaddr = action[1].split(':')
+                        nport = PORT
+                        if len(ipaddr) == 2:
+                            nport = int(ipaddr[1])
+                        ipaddr = ipaddr[0]
+                        self.join(ipaddr, nport)
+
+                    # Bye
+                    elif action[0] == 'b':
+                        self.bye(int(action[1]))
+
+                    # Search
+                    elif action[0] == 's':
+                        self.search(action[1])
+
+                    # Quit
+                    elif action[0] == 'q':
+                        self.shutDown()
 
     # Get 5 random peers except peer.
     def getRndPeers(self, peer):
@@ -52,6 +81,9 @@ class P2PMain():
 
     # Periodic stuff goes here:
     def tick(self):
+        # Consule from the queue
+        self.handle_queue()
+
         # Things to be executed every 5 secs
         if time.time() - self.LastPingTime > 5:
             self.LastPingTime = time.time()
@@ -112,13 +144,6 @@ class P2PMain():
             self.Peers[idx].bye()
             return True
         return False
-
-    # # Perform a query to a specific node
-    # def sendQuery(self, idx, query, mid):
-    #     if idx in self.Peers:
-    #         self.Peers[idx].query(query, mid)
-    #         return True
-    #     return False
 
     # Search
     def search(self, query):
@@ -182,7 +207,7 @@ class P2PMain():
 
     # Close all connections and exit.
     def shutDown(self):
-        logging.info("Broadcasting bye message.", 1)
+        logging.info("Broadcasting bye message.")
         for i in self.Peers:
             self.Peers[i].bye()
             self.Peers[i].close()

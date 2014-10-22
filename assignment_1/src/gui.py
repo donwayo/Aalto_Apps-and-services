@@ -109,12 +109,11 @@ class GuiPart(QtGui.QMainWindow):
     def __init__(self, queue, endcommand, *args):
         QtGui.QMainWindow.__init__(self, *args)
         self.queue = queue
-        # We show the result of the thread in the gui, instead of the console
         self.setupUi(self)
         self.peers = {}
         self.messages = {}
         self.endcommand = endcommand
-        self.p2p = P2PMain('localhost', PORT, queue)
+        self.p2p = P2PMain('0.0.0.0', PORT, queue)
 
     def bye(self):
         self.queue.put(['b', int(self.le_bye.text())])

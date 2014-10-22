@@ -6,6 +6,7 @@ from settings import *
 from utils import *
 from p2p import *
 
+# This only works on Linux/Unix
 # Command line control
 class CmdlineClient(asyncore.file_dispatcher):
     def __init__(self, file):

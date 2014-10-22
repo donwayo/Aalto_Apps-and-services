@@ -215,6 +215,7 @@ class JoinMessage(P2PMessage):
         else:
             self.Request = False
             self.Payload = b'\x02\x00'
+            self.MessageId = msg_id
             
         self.PayloadLength = len(self.Payload)
 

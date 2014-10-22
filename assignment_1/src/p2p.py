@@ -268,8 +268,8 @@ class P2PConnection(asyncore.dispatcher):
         try:
             self.connect( (addr, port) )
             message = JoinMessage(self.P2Pmain.HostIP)
-            self.JoinMessageId = message.GetMessageId()
             self.sendMessage(message)
+            self.JoinMessageId = message.GetMessageId()
             self.PeerPort = port
             logger.debug("Attempting to join with Message:\n {0}".format(message))
             self.PeerName = "{0}:{1}".format(addr,port)
@@ -396,7 +396,7 @@ class P2PConnection(asyncore.dispatcher):
                 self.JoinTime = time.time() 
                 logger.info("Responded to join request @ {0}".format(self.getPeerName()))
             else:
-                logger.info("Message Ids don't match. {0} : {1} @ {2} ".format(msg.MessageId, self.JoinMessageId), self.getPeerName())
+                logger.info("Message Ids don't match. {0} : {1} @ {2} ".format(msg.MessageId, self.JoinMessageId, self.getPeerName()))
         
         # Bye messages
         elif msg.Type == P2PMessage.MSG_BYE:

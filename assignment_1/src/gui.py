@@ -46,6 +46,9 @@ class GuiPart(QtGui.QMainWindow):
         self.sa_log = QtGui.QTextBrowser(self.tab)
         self.sa_log.setGeometry(QtCore.QRect(10, 20, 421, 391))
         self.sa_log.setObjectName(_fromUtf8("sa_log"))
+        self.clear_log = QtGui.QPushButton(self.tab)
+        self.clear_log.setGeometry(QtCore.QRect(60, 407, 140, 32))
+        self.clear_log.setObjectName(_fromUtf8("clear_log"))
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName(_fromUtf8("tab_2"))
@@ -94,6 +97,7 @@ class GuiPart(QtGui.QMainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "P2P", None))
         self.pb_search.setText(_translate("MainWindow", "Search", None))
         self.pb_join.setText(_translate("MainWindow", "Join Host", None))
+        self.clear_log.setText(_translate("MainWindow", "Clear Log", None))
         self.enable_auto_scroll.setText(_translate("MainWindow", "Auto scroll", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Log", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Status", None))
@@ -103,6 +107,7 @@ class GuiPart(QtGui.QMainWindow):
     	self.pb_join.clicked.connect(self.join)
         self.pb_bye.clicked.connect(self.bye)
         self.pb_search.clicked.connect(self.search)
+        self.clear_log.clicked.connect(self.clearLog)
         self.enable_auto_scroll.stateChanged.connect(self.setAutoScroll)
         self.enable_auto_scroll.setCheckState(QtCore.Qt.Checked)
 
@@ -115,6 +120,9 @@ class GuiPart(QtGui.QMainWindow):
         self.messages = {}
         self.endcommand = endcommand
         self.p2p = P2PMain('localhost', PORT, queue)
+
+    def clearLog(self):
+        self.sa_log.setText("")
 
     def setAutoScroll(self):
         self.autoScroll = (self.enable_auto_scroll.checkState() == QtCore.Qt.Checked)

@@ -120,7 +120,8 @@ def ParseData(data):
                 msg = P2PMessage()
                 msg.LoadHeader(header)
         else:
-            logger.info("Trash: Header version: {0} TTL: {1} Payload: {2} - {3} Type: {4}".format(header[0], header[1], header[5], len(payload), header[2]))
+            logger.info("Trash: Header version: {0} TTL: {1} Payload: {2} - {3} Type: {4} From {5}"\
+                .format(header[0], header[1], header[5], len(payload), header[2], numberToIp(header[6])))
     return msg
 
 class ByeMessage(P2PMessage):

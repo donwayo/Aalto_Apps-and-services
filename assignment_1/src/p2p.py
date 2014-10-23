@@ -376,7 +376,7 @@ class P2PConnection(asyncore.dispatcher):
             self.handle_message(msg)
             
         elif len(receivedData) > 0:
-            logger.debug('Got trash from {0}'.format(self.getPeerName()))
+            logger.info('Got trash from {0}'.format(self.getPeerName()))
 
     def handle_message(self, msg):
         

@@ -25,62 +25,62 @@ class GuiPart(QtGui.QMainWindow):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(601, 425)
+        MainWindow.resize(669, 494)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.pb_search = QtGui.QPushButton(self.centralwidget)
-        self.pb_search.setGeometry(QtCore.QRect(410, 60, 171, 32))
+        self.pb_search.setGeometry(QtCore.QRect(480, 60, 180, 32))
         self.pb_search.setObjectName(_fromUtf8("pb_search"))
         self.pb_join = QtGui.QPushButton(self.centralwidget)
-        self.pb_join.setGeometry(QtCore.QRect(410, 130, 171, 32))
+        self.pb_join.setGeometry(QtCore.QRect(480, 140, 180, 32))
         self.pb_join.setObjectName(_fromUtf8("pb_join"))
         self.tabWidget = QtGui.QTabWidget(self.centralwidget)
-        self.tabWidget.setGeometry(QtCore.QRect(10, 10, 381, 391))
+        self.tabWidget.setGeometry(QtCore.QRect(10, 10, 451, 461))
         self.tabWidget.setObjectName(_fromUtf8("tabWidget"))
         self.tab = QtGui.QWidget()
         self.tab.setObjectName(_fromUtf8("tab"))
-        self.sa_log = QtGui.QScrollArea(self.tab)
-        self.sa_log.setGeometry(QtCore.QRect(10, 10, 351, 341))
-        self.sa_log.setWidgetResizable(True)
+        self.enable_auto_scroll = QtGui.QCheckBox(self.tab)
+        self.enable_auto_scroll.setEnabled(True)
+        self.enable_auto_scroll.setGeometry(QtCore.QRect(350, 400, 101, 41))
+        self.enable_auto_scroll.setObjectName(_fromUtf8("enable_auto_scroll"))
+        self.sa_log = QtGui.QTextBrowser(self.tab)
+        self.sa_log.setGeometry(QtCore.QRect(10, 20, 421, 391))
         self.sa_log.setObjectName(_fromUtf8("sa_log"))
+        self.clear_log = QtGui.QPushButton(self.tab)
+        self.clear_log.setGeometry(QtCore.QRect(60, 407, 140, 32))
+        self.clear_log.setObjectName(_fromUtf8("clear_log"))
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName(_fromUtf8("tab_2"))
         self.lw_peers = QtGui.QListWidget(self.tab_2)
-        self.lw_peers.setGeometry(QtCore.QRect(10, 20, 351, 151))
+        self.lw_peers.setGeometry(QtCore.QRect(10, 20, 421, 151))
         self.lw_peers.setObjectName(_fromUtf8("lw_peers"))
         self.lw_messages = QtGui.QListWidget(self.tab_2)
-        self.lw_messages.setGeometry(QtCore.QRect(10, 190, 351, 161))
+        self.lw_messages.setGeometry(QtCore.QRect(10, 190, 421, 161))
         self.lw_messages.setObjectName(_fromUtf8("lw_messages"))
         self.tabWidget.addTab(self.tab_2, _fromUtf8(""))
         self.pb_bye = QtGui.QPushButton(self.centralwidget)
-        self.pb_bye.setGeometry(QtCore.QRect(410, 200, 171, 32))
+        self.pb_bye.setGeometry(QtCore.QRect(479, 210, 180, 32))
         self.pb_bye.setObjectName(_fromUtf8("pb_bye"))
         self.le_search = QtGui.QLineEdit(self.centralwidget)
-        self.le_search.setGeometry(QtCore.QRect(420, 40, 151, 21))
+        self.le_search.setGeometry(QtCore.QRect(485, 40, 171, 21))
         self.le_search.setObjectName(_fromUtf8("le_search"))
         self.le_join = QtGui.QLineEdit(self.centralwidget)
-        self.le_join.setGeometry(QtCore.QRect(420, 110, 151, 21))
+        self.le_join.setGeometry(QtCore.QRect(485, 120, 170, 21))
         self.le_join.setObjectName(_fromUtf8("le_join"))
         self.le_bye = QtGui.QLineEdit(self.centralwidget)
-        self.le_bye.setGeometry(QtCore.QRect(420, 180, 151, 21))
+        self.le_bye.setGeometry(QtCore.QRect(484, 190, 170, 21))
         self.le_bye.setObjectName(_fromUtf8("le_bye"))
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
-        self.action = QtGui.QAction(MainWindow)
-        self.action.setObjectName(_fromUtf8("action"))
 
-        # create log console
-        self._console = QtGui.QTextBrowser(self)
-        self._console.setGeometry(QtCore.QRect(0, 0, 349, 339))
-        self._console.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
-        self._console.ensureCursorVisible()
         # set log console
+        self.sa_log.ensureCursorVisible()
+        self.autoScroll = True
         XStream.stdout().messageWritten.connect( self.updateConsole )
         XStream.stderr().messageWritten.connect( self.updateConsole )
-        self.sa_log.setWidget(self._console)
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
@@ -88,23 +88,28 @@ class GuiPart(QtGui.QMainWindow):
         self.bindUi(MainWindow)
 
     def updateConsole(self, text):
-        self._console.insertPlainText(text)
-        vbar = self._console.verticalScrollBar()
-        vbar.setValue(vbar.maximum())
+        self.sa_log.insertPlainText(text)
+        if self.autoScroll:
+            vbar = self.sa_log.verticalScrollBar()
+            vbar.setValue(vbar.maximum())
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "P2P", None))
         self.pb_search.setText(_translate("MainWindow", "Search", None))
         self.pb_join.setText(_translate("MainWindow", "Join Host", None))
+        self.clear_log.setText(_translate("MainWindow", "Clear Log", None))
+        self.enable_auto_scroll.setText(_translate("MainWindow", "Auto scroll", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Log", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Status", None))
         self.pb_bye.setText(_translate("MainWindow", "Send Bye", None))
-        self.action.setText(_translate("MainWindow", "Menu", None))
 
     def bindUi(self, MainWindow):
     	self.pb_join.clicked.connect(self.join)
         self.pb_bye.clicked.connect(self.bye)
         self.pb_search.clicked.connect(self.search)
+        self.clear_log.clicked.connect(self.clearLog)
+        self.enable_auto_scroll.stateChanged.connect(self.setAutoScroll)
+        self.enable_auto_scroll.setCheckState(QtCore.Qt.Checked)
 
     def __init__(self, queue, endcommand, *args):
         QtGui.QMainWindow.__init__(self, *args)
@@ -114,6 +119,12 @@ class GuiPart(QtGui.QMainWindow):
         self.messages = {}
         self.endcommand = endcommand
         self.p2p = P2PMain('0.0.0.0', PORT, queue)
+
+    def clearLog(self):
+        self.sa_log.setText("")
+
+    def setAutoScroll(self):
+        self.autoScroll = (self.enable_auto_scroll.checkState() == QtCore.Qt.Checked)
 
     def bye(self):
         self.queue.put(['b', int(self.le_bye.text())])

@@ -114,7 +114,6 @@ class GuiPart(QtGui.QMainWindow):
     def __init__(self, queue, endcommand, *args):
         QtGui.QMainWindow.__init__(self, *args)
         self.queue = queue
-        # We show the result of the thread in the gui, instead of the console
         self.setupUi(self)
         self.peers = {}
         self.messages = {}
@@ -123,7 +122,7 @@ class GuiPart(QtGui.QMainWindow):
         serverPort = PORT
         if len(sys.argv) > 1:
             serverPort = int(sys.argv[1])
-        self.p2p = P2PMain('', serverPort, queue)
+        self.p2p = P2PMain('0.0.0.0', serverPort, queue)
 
     def clearLog(self):
         self.sa_log.setText("")

@@ -82,6 +82,7 @@ class P2PMain():
                 retPeers.append([self.Peers[p].getPeerIp(), self.Peers[p].PeerPort])
             if len(retPeers) == 5:
                 return retPeers
+        logger.info("Our peers: {0}".format(retPeers))
         return retPeers
 
     # Check if a peer is already connected.
@@ -416,12 +417,12 @@ class P2PConnection(asyncore.dispatcher):
         elif msg.Type == P2PMessage.MSG_PONG:
             if msg.MessageId == self.LastPing:
                 if msg.PayloadLength > 0:
-                    logger.debug("Got Pong message (B) from {0}.".format(self.getPeerName()))
+                    logger.info("Got Pong message (B) from {0}.".format(self.getPeerName()))
                     entries = msg.GetEntries()
                     if entries == None:
-                        logger.debug("No new peers from last Pong message.")
+                        logger.info("No new peers from last Pong message.")
                     else:
-                        logger.debug("Attempting to connect to {0} new peers.".format(len(entries)))
+                        logger.info("Attempting to connect to {0} new peers.".format(len(entries)))
                    
                         # Try to connect to other peers.     
                         for e in entries:

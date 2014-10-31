@@ -119,7 +119,11 @@ class GuiPart(QtGui.QMainWindow):
         self.peers = {}
         self.messages = {}
         self.endcommand = endcommand
-        self.p2p = P2PMain('localhost', PORT, queue)
+
+        serverPort = PORT
+        if len(sys.argv) > 1:
+            serverPort = int(sys.argv[1])
+        self.p2p = P2PMain('', serverPort, queue)
 
     def clearLog(self):
         self.sa_log.setText("")

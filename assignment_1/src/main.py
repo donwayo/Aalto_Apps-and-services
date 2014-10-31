@@ -92,6 +92,6 @@ ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
 
-p2p = P2PMain('localhost', serverPort)
+p2p = P2PMain('', serverPort)
 cmdline = CmdlineClient(sys.stdin)
 asyncore.loop(10)

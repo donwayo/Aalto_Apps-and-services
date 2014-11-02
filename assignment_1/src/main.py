@@ -79,7 +79,7 @@ if len(sys.argv) > 1:
     serverPort = int(sys.argv[1])
 
 # init logging
-logLevel = logging.INFO
+logLevel = logging.DEBUG
 logger = logging.getLogger('p2p')
 logger.setLevel(logLevel)
 

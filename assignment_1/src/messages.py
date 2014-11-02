@@ -125,19 +125,21 @@ def ParseData(data):
     return msg
 
 class ByeMessage(P2PMessage):
-    def __init__(self, ipaddr):
+    def __init__(self, ipaddr, port=PORT):
         P2PMessage.__init__(self)
 
         self.TTL = 1
+        self.SenderPort = port
         self.Type = P2PMessage.MSG_BYE
         self.SenderIP = ipaddr
 
 class PingMessage(P2PMessage):
-    def __init__(self, ipaddr, ttl = 1):
+    def __init__(self, ipaddr, ttl = 1, port=PORT):
         P2PMessage.__init__(self)
 
         self.TTL = ttl
         self.Type = P2PMessage.MSG_PING
+        self.SenderPort = port
         self.SenderIP = ipaddr
         self.PayloadLength = 0
 
@@ -151,11 +153,12 @@ class PongMessage(P2PMessage):
     
     PongEntry = struct.Struct('!IHH')
 
-    def __init__(self, ipaddr):
+    def __init__(self, ipaddr, port=PORT):
         P2PMessage.__init__(self)
         self.TTL = 1
         self.Type = P2PMessage.MSG_PONG
         self.SenderIP = ipaddr
+        self.SenderPort = port
         self.Entries = None
 
     def AddEntry(self, ip, port):
@@ -203,12 +206,13 @@ class PongMessage(P2PMessage):
         return self.GetHeaderBytes() + self.Payload
 
 class JoinMessage(P2PMessage):
-    def __init__(self, ipaddr, msg_id = -1):
+    def __init__(self, ipaddr, msg_id = -1, port=PORT):
         P2PMessage.__init__(self)
 
         self.TTL = 1
         self.Type = P2PMessage.MSG_JOIN
         self.SenderIP = ipaddr
+        self.SenderPort = port
 
         if msg_id == -1:
             self.Request = True
@@ -230,12 +234,13 @@ class JoinMessage(P2PMessage):
                 self.Request = True
 
 class QueryMessage(P2PMessage):
-    def __init__(self, ipaddr):
+    def __init__(self, ipaddr, port=PORT):
         P2PMessage.__init__(self)
 
         self.TTL = DEFAULT_TTL
         self.Type = P2PMessage.MSG_QUERY
         self.SenderIP = ipaddr
+        self.SenderPort = port
         self.Payload = b''
 
     def SetQuery(self, query):
@@ -251,12 +256,13 @@ class QueryHitMessage(P2PMessage):
     EntryPairStruct = struct.Struct('!HHI')
     EntrySizeStruct = struct.Struct('!HH')
 
-    def __init__(self, ipaddr, mid):
+    def __init__(self, ipaddr, mid, port=PORT):
         P2PMessage.__init__(self)
 
         self.TTL = DEFAULT_TTL
         self.Type = P2PMessage.MSG_QHIT
         self.SenderIP = ipaddr
+        self.SenderPort = port
         self.MessageId = mid
         self.Payload = b''
 

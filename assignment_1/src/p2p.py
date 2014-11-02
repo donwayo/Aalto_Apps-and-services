@@ -24,6 +24,7 @@ class P2PMain():
         self.LastPingTime = 0
         self.LastBPingTime = 0
         self.HostIP = struct.unpack("!I",socket.inet_aton(socket.gethostbyname(socket.gethostname())))[0]
+        self.HostPort = port
         self.queue = queue
         self.lock = threading.RLock()
         self.status = ''
@@ -268,7 +269,7 @@ class P2PConnection(asyncore.dispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.connect( (addr, port) )
-            message = JoinMessage(self.P2Pmain.HostIP)
+            message = JoinMessage(self.P2Pmain.HostIP, port=self.P2Pmain.HostPort)
             self.sendMessage(message)
             self.JoinMessageId = message.GetMessageId()
             self.PeerPort = port
@@ -282,14 +283,14 @@ class P2PConnection(asyncore.dispatcher):
     # Send a bye message to a node.
     def bye(self):
         if self.Joined:
-            msg = ByeMessage(self.getIP())
+            msg = ByeMessage(self.getIP(), port=self.P2Pmain.HostPort)
             self.sendMessage(msg)
             logger.info("Sending Bye message to {0}".format(self.getPeerName()))
             logger.debug("{0}".format(msg))
 
     def query(self, query, mid=0):
         if self.Joined:
-            msg = QueryMessage(self.getIP())
+            msg = QueryMessage(self.getIP(), port=self.P2Pmain.HostPort)
             msg.SetQuery(query)
             msg.MessageId = mid
             self.sendMessage(msg)
@@ -339,7 +340,7 @@ class P2PConnection(asyncore.dispatcher):
 
     def ping(self, ptype='A'):
         if self.Joined:
-            msg = PingMessage(self.getIP())
+            msg = PingMessage(self.getIP(), port=self.P2Pmain.HostPort)
             if ptype == 'A':
                 logger.debug("Send Ping request (A) to {0}".format(self.getPeerName()))
 
@@ -352,7 +353,7 @@ class P2PConnection(asyncore.dispatcher):
 
     def pong(self, mid, pongType='A'):
         if self.Joined:
-            msg = PongMessage(self.getIP())
+            msg = PongMessage(self.getIP(), port=self.P2Pmain.HostPort)
             msg.MessageId = mid
 
             if pongType == 'A':
@@ -391,7 +392,7 @@ class P2PConnection(asyncore.dispatcher):
                 logger.info("Joined successfully @ {0}".format(self.getPeerName()))
                 self.JoinTime = time.time()
             elif msg.Request:
-                rmsg = JoinMessage(self.P2Pmain.HostIP, msg.MessageId)
+                rmsg = JoinMessage(self.P2Pmain.HostIP, msg.MessageId, port=self.P2Pmain.HostPort)
                 self.sendMessage(rmsg)
                 self.Joined = True
                 self.JoinTime = time.time() 
@@ -453,7 +454,7 @@ class P2PConnection(asyncore.dispatcher):
                 matches = self.P2Pmain.getMatches(query)
                 logger.info("Matches: {0}".format(matches))
                 if len(matches) > 0:
-                    qhitMsg = QueryHitMessage(self.getIP(), mid)
+                    qhitMsg = QueryHitMessage(self.getIP(), mid, port=self.P2Pmain.HostPort)
                     qhitMsg.SetEntries(matches)
                     self.sendMessage(qhitMsg)
             else:

@@ -44,6 +44,7 @@ class CmdlineClient(asyncore.file_dispatcher):
             elif receivedData[0] == 'b' and len(receivedData) > 1:
                 cId = int(receivedData[1:])
                 logger.info('Got request to send Bye message to connection {0}'.format(cId))
+                self.send('Sending Bye message to connection {0}\n'.format(cId))
                 p2p.sendBye(cId)
 
             # Display information
@@ -53,11 +54,13 @@ class CmdlineClient(asyncore.file_dispatcher):
                 else:
                     self.send("{0}\n".format(p2p))
 
-            # Change loglvl (doesn't work!)
+            # Change loglvl 
             elif receivedData[0] == 'l' and len(receivedData) > 1:
                 loglvl = int(receivedData[1:]) * 10
-                logging.getLogger().setLevel(loglvl)
-                self.send("Changed loglvl to {0}\n".format(loglvl))
+                ch.setLevel(loglvl)
+                logger.setLevel(loglvl)
+
+                self.send("Changed loglvl to {0}\n".format(logger.getEffectiveLevel()))
 
             # Send ping
             elif receivedData[0] == 'p' and len(receivedData) > 1:
@@ -79,7 +82,7 @@ if len(sys.argv) > 1:
     serverPort = int(sys.argv[1])
 
 # init logging
-logLevel = logging.DEBUG
+logLevel = logging.CRITICAL
 logger = logging.getLogger('p2p')
 logger.setLevel(logLevel)
 

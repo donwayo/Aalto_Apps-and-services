@@ -364,8 +364,7 @@ class P2PConnection(asyncore.dispatcher):
             else:
                 logger.debug("Send Ping request (B) to {0}".format(self.getPeerName()))
                 msg.TTL = 5
-                logger.info("Ping message: {0}".format(msg))
-             
+                
             self.sendMessage(msg)
             self.LastPing = msg.MessageId;
  
@@ -396,7 +395,7 @@ class P2PConnection(asyncore.dispatcher):
             self.handle_message(msg)
              
         elif len(receivedData) > 0:
-            logger.info('Got trash from {0}'.format(self.getPeerName()))
+            logger.debug('Got trash from {0}'.format(self.getPeerName()))
  
     def handle_message(self, msg):
          
@@ -407,14 +406,14 @@ class P2PConnection(asyncore.dispatcher):
             if msg.MessageId == self.JoinMessageId and \
             not msg.Request:
                 self.Joined = True
-                logger.info("Joined successfully @ {0}".format(self.getPeerName()))
+                logger.critical("Joined successfully @ {0}".format(self.getPeerName()))
                 self.JoinTime = time.time()
             elif msg.Request:
                 rmsg = JoinMessage(self.P2Pmain.HostIP, msg.MessageId, port=self.P2Pmain.HostPort)
                 self.sendMessage(rmsg)
                 self.Joined = True
                 self.JoinTime = time.time() 
-                logger.info("Responded to join request @ {0}".format(self.getPeerName()))
+                logger.critical("Responded to join request @ {0}".format(self.getPeerName()))
             else:
                 logger.info("Message Ids don't match. {0} : {1} @ {2} ".format(msg.MessageId, self.JoinMessageId, self.getPeerName()))
          
@@ -441,7 +440,7 @@ class P2PConnection(asyncore.dispatcher):
                     if entries == None:
                         logger.info("No new peers from last Pong message.")
                     else:
-                        logger.info("Attempting to connect to {0} new peers: {1}".format(len(entries), entries))
+                        logger.debug("Attempting to connect to {0} new peers: {1}".format(len(entries), entries))
                     
                         # Try to connect to other peers.     
                         for e in entries:
@@ -470,14 +469,14 @@ class P2PConnection(asyncore.dispatcher):
                 self.P2Pmain.forwardQueryMessage(msg)
                 # Check local files and answer the query.
                 matches = self.P2Pmain.getMatches(query)
-                logger.info("Matches: {0}".format(matches))
                 if len(matches) > 0:
+                    logger.critical("QHIT match for key '{1}': {0}".format(matches, query))
                     qhitMsg = QueryHitMessage(self.getIP(), mid, port=self.P2Pmain.HostPort)
                     qhitMsg.SetEntries(matches)
                     self.sendMessage(qhitMsg)
             else:
                 # Ignore the query 
-                logger.info("Message ID existed -> drop the message")
+                logger.info("Message ID existed -> drop the query message")
         elif msg.Type == P2PMessage.MSG_QHIT:
             logger.debug("QueryHit Message\n{0}".format(msg))
  
@@ -487,9 +486,9 @@ class P2PConnection(asyncore.dispatcher):
                 # display the result if the query is from this node
                 if queryInfo['from'] == 0:
                     entries = msg.GetEntries()
-                    logger.info("Result from: {0}".format(socket.inet_ntoa(struct.pack('!I',msg.SenderIP))))
+                    logger.critical("Result from: {0}".format(socket.inet_ntoa(struct.pack('!I',msg.SenderIP))))
                     for eid, val in entries.items():
-                        logger.info("ID: {0} - Value: {1}".format(eid, val))
+                        logger.critical("ID: {0} - Value: {1}".format(eid, val))
                 # otherwise, forward it back based on our history 
                 else:
                     self.P2Pmain.forwardQueryHitMessage(msg, queryInfo['from'])

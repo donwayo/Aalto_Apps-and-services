@@ -11,14 +11,11 @@ We provide both a command line client, and a GUI client. The command line client
 Both clients accept a single optional command line argument that specifies the port that the P2P Client should run on. 
 
 Execute the GUI client with:
-```
-$ python gui.py [port] 
-```
+```$ python gui.py [port] ```
 
 or run the command line client like this:
-```
-$ python main.py [port]
-```
+
+```$ python main.py [port]```
 
 ## GUI Client
 The GUI client presents an easy to use interface that allows you to search for keys on the network, join hosts, send bye messages, and monitor the status of peer connections and received query messages. 
@@ -30,19 +27,19 @@ The following commands can be used to interact with the command line client:
 The join command takes as an argument the host it should connect to. The host should be `ip[:port]` where the `port` is optional or instead just a `b` to indicate the default bootstrap node.
 
 #### Examples:
-* join host 10.0.0.1 on port 10334:
+Join host 10.0.0.1 on port 10334:
 ```
 j10.0.0.1:10334
 - 04:06:44 PM: Joined successfully @ 10.0.0.1:10334
 ```
 
-* join host 10.0.0.1 on default port:
+Join host 10.0.0.1 on default port:
 ```
 j10.0.0.1
 - 04:06:44 PM: Joined successfully @ 10.0.0.1:10001
 ```
 
-* join bootstrap node:
+Join bootstrap node:
 ```
 jb
 Joining bootstrap node.

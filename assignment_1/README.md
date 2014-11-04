@@ -27,19 +27,19 @@ The following commands can be used to interact with the command line client:
 The join command takes as an argument the host it should connect to. The host should be `ip[:port]` where the `port` is optional or instead just a `b` to indicate the default bootstrap node.
 
 #### Examples:
-Join host 10.0.0.1 on port 10334:
+##### Join host 10.0.0.1 on port 10334:
 ```
 j10.0.0.1:10334
 - 04:06:44 PM: Joined successfully @ 10.0.0.1:10334
 ```
 
-Join host 10.0.0.1 on default port:
+##### Join host 10.0.0.1 on default port:
 ```
 j10.0.0.1
 - 04:06:44 PM: Joined successfully @ 10.0.0.1:10001
 ```
 
-Join bootstrap node:
+##### Join bootstrap node:
 ```
 jb
 Joining bootstrap node.

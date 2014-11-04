@@ -71,6 +71,12 @@ class GuiPart(QtGui.QMainWindow):
         self.le_bye = QtGui.QLineEdit(self.centralwidget)
         self.le_bye.setGeometry(QtCore.QRect(484, 190, 170, 21))
         self.le_bye.setObjectName(_fromUtf8("le_bye"))
+        self.le_log = QtGui.QLineEdit(self.centralwidget)
+        self.le_log.setGeometry(QtCore.QRect(484, 320, 170, 21))
+        self.le_log.setObjectName(_fromUtf8("le_log"))
+        self.pb_log = QtGui.QPushButton(self.centralwidget)
+        self.pb_log.setGeometry(QtCore.QRect(478, 340, 180, 32))
+        self.pb_log.setObjectName(_fromUtf8("pb_log"))
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
@@ -102,6 +108,7 @@ class GuiPart(QtGui.QMainWindow):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Log", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Status", None))
         self.pb_bye.setText(_translate("MainWindow", "Send Bye", None))
+        self.pb_log.setText(_translate("MainWindow", "Set Log Level", None))
 
     def bindUi(self, MainWindow):
     	self.pb_join.clicked.connect(self.join)
@@ -110,6 +117,7 @@ class GuiPart(QtGui.QMainWindow):
         self.clear_log.clicked.connect(self.clearLog)
         self.enable_auto_scroll.stateChanged.connect(self.setAutoScroll)
         self.enable_auto_scroll.setCheckState(QtCore.Qt.Checked)
+        self.pb_log.clicked.connect(self.setLogLevel)
 
     def __init__(self, queue, endcommand, *args):
         QtGui.QMainWindow.__init__(self, *args)
@@ -123,6 +131,11 @@ class GuiPart(QtGui.QMainWindow):
         if len(sys.argv) > 1:
             serverPort = int(sys.argv[1])
         self.p2p = P2PMain('0.0.0.0', serverPort, queue)
+
+    def setLogLevel(self):
+        level = int(self.le_log.text())
+        logger.info("Setting to log level: {0}".format(level))
+        logger.setLevel(level)
 
     def clearLog(self):
         self.sa_log.setText("")

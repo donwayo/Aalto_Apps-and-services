@@ -165,6 +165,29 @@
      </rect>
     </property>
    </widget>
+   <widget class="QLineEdit" name="le_log">
+    <property name="geometry">
+     <rect>
+      <x>484</x>
+      <y>320</y>
+      <width>170</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pb_log">
+    <property name="geometry">
+     <rect>
+      <x>478</x>
+      <y>340</y>
+      <width>180</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Set Log Level</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>

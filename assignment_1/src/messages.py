@@ -94,10 +94,15 @@ def ParseData(data):
  
     if len(data) > 15:
         header = P2PMessage.MessageHeader.unpack(data[:16])
-        payload = data[16:]
+        payload = b''
+        extra_data = b''
  
         # Check that the header is valid.
-        if header[0] == 1 and header[1] > 0 and header[1] <= 5 and header[5] == len(payload):
+        if header[0] == 1 and header[1] > 0 and header[1] <= 5 and header[5] <= len(data[16:]):
+            
+            payload = data[16:16 + header[5]]
+            extra_data = data[16 + header[5]:]
+
             if header[2] == P2PMessage.MSG_JOIN:
                 msg = JoinMessage(0)
                 msg.FromData(header, payload)
@@ -122,7 +127,7 @@ def ParseData(data):
         else:
             logger.info("Trash: Header version: {0} TTL: {1} Payload: {2} - {3} Type: {4} From {5}"\
                 .format(header[0], header[1], header[5], len(payload), header[2], numberToIp(header[6])))
-    return msg
+    return [msg, extra_data]
  
 class ByeMessage(P2PMessage):
     def __init__(self, ipaddr, port=PORT):
@@ -198,6 +203,7 @@ class PongMessage(P2PMessage):
  
         if not self.Entries == None: 
             self.Payload = struct.pack('!HH', len(self.Entries), 0)
+
             for e in self.Entries:
                 self.Payload += self.PongEntry.pack(e[0], e[1], 0)
  

@@ -133,7 +133,7 @@ class GuiPart(QtGui.QMainWindow):
         self.p2p = P2PMain('0.0.0.0', serverPort, queue)
 
     def setLogLevel(self):
-        level = int(self.le_log.text())
+        level = int(self.le_log.text()) * 10
         logger.info("Setting to log level: {0}".format(level))
         logger.setLevel(level)
 

@@ -384,18 +384,22 @@ class P2PConnection(asyncore.dispatcher):
                  
  
     def sendMessage(self, msg):
-        self.out_buffer = msg.GetBytes()
+        self.out_buffer += msg.GetBytes()
         logger.debug("Sending message: {0}".format(msg))
  
     def handle_read(self):
         receivedData = self.recv(8192)
-        msg = ParseData(receivedData)
-        if msg:
+        msgs = []
+        while len(receivedData) > 0:
+            msg, receivedData = ParseData(receivedData)
+            if msg:
+                msgs += [msg]
+            else:
+                logger.debug('Got trash from {0}'.format(self.getPeerName()))    
+
+        for msg in msgs:
             logger.debug('Receiving: {0}'.format(msg))
             self.handle_message(msg)
-             
-        elif len(receivedData) > 0:
-            logger.debug('Got trash from {0}'.format(self.getPeerName()))
  
     def handle_message(self, msg):
          

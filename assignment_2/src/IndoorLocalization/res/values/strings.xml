@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">IndoorLocalization</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_sensors">Sensors</string>
+    <string name="title_activity_wifi_fingerprint">WifiFingerprint</string>
+    <string name="title_activity_local_location">LocalLocation</string>
+
+</resources>

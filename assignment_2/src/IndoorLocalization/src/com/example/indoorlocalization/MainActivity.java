@@ -109,14 +109,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
         @Override
         public int getCount() {
-            return 3;
+            return 4;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
         	switch(position){
 	    		case 0:
-	    			return "Location";
+	    			return "Localize";
 	    		case 1:
 	    			return "Collect";
 	    		case 2:

@@ -63,6 +63,8 @@ public class LocalLocation extends Fragment {
 			}
 		});
 		
+		testGivenData();
+		
 		return rootView;
 	}
 	

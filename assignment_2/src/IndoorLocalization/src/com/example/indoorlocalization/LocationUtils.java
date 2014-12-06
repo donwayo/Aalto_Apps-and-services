@@ -54,10 +54,10 @@ public class LocationUtils {
 			
 			double minDist = Double.MAX_VALUE;
 			int minIndex = -1;
-			Log.d("TAG", "Sample " + i);
+			//Log.d("TAG", "Sample " + i);
 			for (int j = 0; j < mModels.size(); j++) {
 				double dist = mModels.get(j).distanceTo(sample);
-				Log.d("TAG", "Distance to " + mModels.get(j).room + ": " + dist);
+				//Log.d("TAG", "Distance to " + mModels.get(j).room + ": " + dist);
 				if (dist < minDist) {
 					minDist = dist;
 					minIndex = j;
@@ -86,7 +86,7 @@ public class LocationUtils {
 			List<Map<String, Integer> > res = new ArrayList<Map<String, Integer> >();
 			
 			// wifi level data
-			String filename = "test/" + room + ".csv";
+			String filename = "test/" + room;
 			//String filename = room + ".csv";
 			InputStream is = mAssetManager.open(filename);
 			InputStreamReader isReader = new InputStreamReader(is);
@@ -151,6 +151,7 @@ class DataModel {
 			if (countMatch / sample.keySet().size() <= 0.7) {
 				continue;
 			}
+			
 			if (curDist < res) {
 				res = curDist;
 			}
